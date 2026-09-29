@@ -1,7 +1,7 @@
 # gontrol
 
 [![CI](https://github.com/lorsanstand/gontrol/actions/workflows/ci.yml/badge.svg)](https://github.com/lorsanstand/gontrol/actions/workflows/ci.yml)
-![Go Version](https://img.shields.io/github/go-mod/go-version/lorsanstnad/gontrol)
+![Go Version](https://img.shields.io/github/go-mod/go-version/lorsanstand/gontrol)
 
 **gontrol** — легковесная система удаленного администрирования на Go с архитектурой Hub-Agent.
 
