@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"uuid"
 
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -28,6 +29,10 @@ func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if agentRequest.AgentID == "" {
+		agentRequest.AgentID = uuid.New().String()
+	}
+
 	h.store.RegisterOrUpdate(agentRequest)
 
 	task, err := h.store.PopTask(agentRequest.AgentID)
@@ -36,7 +41,7 @@ func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agentResponse := models.HeartbeatResponse{}
+	agentResponse := models.HeartbeatResponse{AgentID: agentRequest.AgentID}
 	if err == nil {
 		agentResponse.Task = &task
 	}
