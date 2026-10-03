@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
@@ -9,7 +9,11 @@ import (
 )
 
 type HeartbeatHandler struct {
-	Store *store.AgentStore
+	store *store.AgentStore
+}
+
+func NewHeartbeatHandler(store *store.AgentStore) *HeartbeatHandler {
+	return &HeartbeatHandler{store: store}
 }
 
 func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +24,7 @@ func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid json", http.StatusBadRequest)
 	}
 
-	h.Store.RegisterOrUpdate(agentRequest)
+	h.store.RegisterOrUpdate(agentRequest)
 
 	w.WriteHeader(http.StatusOK)
 }

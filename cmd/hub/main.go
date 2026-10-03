@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/handlers"
+	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 )
 
@@ -17,9 +17,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	hb := &handlers.HeartbeatHandler{Store: agentStore}
-
-	mux.Handle("POST /api/v1/heartbeat", hb)
+	deliveryHttp.RegisterRoutes(mux, agentStore)
 
 	http.ListenAndServe(":8089", mux)
 }
