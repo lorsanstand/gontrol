@@ -13,4 +13,8 @@ func RegisterRoutes(mux *http.ServeMux, store *store.AgentStore) {
 
 	taskHandler := handler.NewTaskHandler(store)
 	mux.HandleFunc("POST /api/v1/tasks", taskHandler.PostCreateTask)
+
+	agentHandler := handler.NewAgentHandler(store)
+	mux.HandleFunc("GET /api/v1/agents/{id}", agentHandler.GetAgent)
+	mux.HandleFunc("GET /api/v1/agents/", agentHandler.GetAllAgents)
 }
