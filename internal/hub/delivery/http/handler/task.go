@@ -46,3 +46,8 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 }
+
+// Написать логику сохранения результата и выдача пользователю
+func (t *TaskHandler) PostResultTask(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+}
