@@ -17,6 +17,10 @@ type AgentStore struct {
 	store map[string]modelsHub.Agent
 }
 
+func NewAgentStore() *AgentStore {
+	return &AgentStore{store: make(map[string]modelsHub.Agent)}
+}
+
 func (a *AgentStore) RegisterOrUpdate(agentRequest models.HeartbeatRequest) {
 	a.m.Lock()
 	defer a.m.Unlock()

@@ -18,5 +18,6 @@ type HeartbeatRequest struct {
 }
 
 type HeartbeatResponse struct {
-	Tasks []Task `json:"tasks"`
+	AgentID string `json:"agent_id"`
+	Task    *Task  `json:"task"`
 }
