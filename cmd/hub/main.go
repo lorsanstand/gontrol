@@ -28,7 +28,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	if err := srv.ListenAndServe(":8089", mux); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		logger.Info("server stopped", slog.Any("error", err))
 		return
 	}
