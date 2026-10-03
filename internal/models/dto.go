@@ -18,5 +18,5 @@ type HeartbeatRequest struct {
 }
 
 type HeartbeatResponse struct {
-	Tasks []Task `json:"tasks"`
+	Task *Task `json:"task"`
 }
