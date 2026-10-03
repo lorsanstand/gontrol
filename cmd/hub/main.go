@@ -19,5 +19,8 @@ func main() {
 
 	deliveryHttp.RegisterRoutes(mux, agentStore)
 
-	http.ListenAndServe(":8089", mux)
+	if err := http.ListenAndServe(":8089", mux); err != nil {
+		logger.Info("server stopped", slog.Any("error", err))
+		return
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
 type AgentHandler struct {
@@ -30,19 +31,15 @@ func (a *AgentHandler) GetAllAgents(w http.ResponseWriter, r *http.Request) {
 func (a *AgentHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
 	agentID := r.PathValue("id")
 	if agentID == "" {
-		http.Error(w, "agent ID is required", http.StatusBadRequest)
+		utils.WriteError(w, "agent ID is required", http.StatusBadRequest)
 		return
 	}
 
 	agent, err := a.store.GetAgent(agentID)
 	if err != nil && !errors.Is(err, store.ErrAgentNotExist) {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(agent); err != nil {
-		log.Printf("error encoding response: %v", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
+	utils.WriteJSON(w, agent, http.StatusOK)
 }

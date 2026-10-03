@@ -9,6 +9,7 @@ import (
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/models"
+	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
 type TaskHandler struct {
@@ -24,7 +25,7 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&taskRequest)
 	if err != nil {
-		http.Error(w, "Invalid json", http.StatusBadRequest)
+		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
 		return
 	}
 
@@ -35,11 +36,11 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 	err = t.store.AddTask(taskRequest.AgentID, task)
 	if err != nil {
 		if errors.Is(err, store.ErrAgentNotExist) {
-			http.Error(w, "Agent not found", http.StatusNotFound)
+			utils.WriteError(w, "Agent not found", http.StatusNotFound)
 			return
 		}
 
-		http.Error(w, "Failed to save task", http.StatusBadGateway)
+		utils.WriteError(w, "Failed to save task", http.StatusBadGateway)
 		return
 	}
 
