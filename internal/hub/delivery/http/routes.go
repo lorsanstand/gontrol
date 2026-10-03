@@ -10,4 +10,7 @@ import (
 func RegisterRoutes(mux *http.ServeMux, store *store.AgentStore) {
 	heartbeatHandler := handler.NewHeartbeatHandler(store)
 	mux.Handle("POST /api/v1/heartbeat", heartbeatHandler)
+
+	taskHandler := handler.NewTaskHandler(store)
+	mux.HandleFunc("POST /api/v1/tasks", taskHandler.PostCreateTask)
 }
