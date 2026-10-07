@@ -22,5 +22,5 @@ func main() {
 		},
 	}
 
-	service.NewHubService("127.0.0.1:8089", client)
+	service.NewHubClient("127.0.0.1:8089/", client)
 }

@@ -10,16 +10,16 @@ import (
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
-type HubService struct {
+type HubClient struct {
 	addr   string
 	client *http.Client
 }
 
-func NewHubService(address string, client *http.Client) *HubService {
-	return &HubService{client: client, addr: address}
+func NewHubClient(address string, client *http.Client) *HubClient {
+	return &HubClient{client: client, addr: address}
 }
 
-func (h *HubService) SendHeartbeat(ctx context.Context, heartbeat models.HeartbeatRequest) (models.HeartbeatResponse, error) {
+func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.HeartbeatRequest) (models.HeartbeatResponse, error) {
 	jsonData, err := json.Marshal(heartbeat)
 	if err != nil {
 		return models.HeartbeatResponse{}, fmt.Errorf("marshal heartbeat request: %w", err)
@@ -28,7 +28,7 @@ func (h *HubService) SendHeartbeat(ctx context.Context, heartbeat models.Heartbe
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		h.addr,
+		h.addr+fmt.Sprintf("heartbeat"),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
@@ -51,7 +51,7 @@ func (h *HubService) SendHeartbeat(ctx context.Context, heartbeat models.Heartbe
 	return result, nil
 }
 
-func (h *HubService) SendTaskResult(ctx context.Context, taskResult models.TaskResult) error {
+func (h *HubClient) SendTaskResult(ctx context.Context, id string, taskResult models.TaskResult) error {
 	jsonData, err := json.Marshal(taskResult)
 	if err != nil {
 		return fmt.Errorf("marshal task result request: %w", err)
@@ -60,7 +60,7 @@ func (h *HubService) SendTaskResult(ctx context.Context, taskResult models.TaskR
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		h.addr,
+		h.addr+fmt.Sprintf("tasks/%v/result", id),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
@@ -74,7 +74,7 @@ func (h *HubService) SendTaskResult(ctx context.Context, taskResult models.TaskR
 		return fmt.Errorf("send task result request: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("unexpected status code: %v", resp.StatusCode)
 	}
