@@ -34,7 +34,7 @@ func (a *AgentRunner) Serve() error {
 		time.Sleep(5 * time.Second)
 
 		a.log.Debug("send heartbeat")
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 		resp, err := a.hub.SendHeartbeat(ctx, hb)
 		if err != nil {
@@ -64,5 +64,7 @@ func (a *AgentRunner) Serve() error {
 			a.log.Warn("send result task to hub", slog.Any("error", err))
 			continue
 		}
+
+		cancel()
 	}
 }
