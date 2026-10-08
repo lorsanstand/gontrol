@@ -15,6 +15,7 @@ type TaskExecutor struct {
 func (t *TaskExecutor) Execute(ctx context.Context, task models.Task) (models.TaskResult, error) {
 	start := time.Now()
 
+	//nolint:gosec // G204: запуск команды из задачи, перепишу позже
 	cmd := exec.Command(task.Command, task.Args["args"])
 	output, err := cmd.CombinedOutput()
 	if err != nil {

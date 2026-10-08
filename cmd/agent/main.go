@@ -27,8 +27,5 @@ func main() {
 	agent := service.NewAgentRunner(logger, task, hub)
 
 	err := agent.Serve()
-	if err != nil {
-		logger.Error("stop agent serve", slog.Any("error", err))
-		return
-	}
+	logger.Error("stop agent serve", slog.Any("error", err))
 }
