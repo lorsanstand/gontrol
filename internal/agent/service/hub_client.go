@@ -43,6 +43,10 @@ func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.Heartbea
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusCreated {
+		return models.HeartbeatResponse{}, fmt.Errorf("unexpected status code: %v", resp.StatusCode)
+	}
+
 	var result models.HeartbeatResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return models.HeartbeatResponse{}, fmt.Errorf("unmarshal heartbeat response: %w", err)
