@@ -28,7 +28,7 @@ func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.Heartbea
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		h.addr+fmt.Sprintf("heartbeat"),
+		fmt.Sprintf("%vheartbeat", h.addr),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
@@ -64,7 +64,7 @@ func (h *HubClient) SendTaskResult(ctx context.Context, id string, taskResult mo
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		h.addr+fmt.Sprintf("tasks/%v/result", id),
+		fmt.Sprintf("%vtasks/%v/result", h.addr, id),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
