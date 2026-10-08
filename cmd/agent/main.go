@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	logger.Info("starting gontrol-agent...")
 
 	client := &http.Client{
@@ -22,5 +22,9 @@ func main() {
 		},
 	}
 
-	service.NewHubClient("127.0.0.1:8089/", client)
+	hub := service.NewHubClient("http://127.0.0.1:8089/api/v1/", client)
+	task := &service.TaskExecutor{}
+	agent := service.NewAgentRunner(logger, task, hub)
+
+	agent.Serve()
 }
