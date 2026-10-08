@@ -26,7 +26,7 @@ func (a *AgentStore) RegisterOrUpdate(agentRequest models.HeartbeatRequest) {
 	defer a.m.Unlock()
 
 	agentDB, ok := a.store[agentRequest.AgentID]
-	if ok {
+	if !ok {
 		a.store[agentRequest.AgentID] = modelsHub.Agent{
 			AgentID:  agentRequest.AgentID,
 			OS:       agentRequest.OS,
