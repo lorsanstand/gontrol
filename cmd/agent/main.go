@@ -26,5 +26,9 @@ func main() {
 	task := &service.TaskExecutor{}
 	agent := service.NewAgentRunner(logger, task, hub)
 
-	agent.Serve()
+	err := agent.Serve()
+	if err != nil {
+		logger.Error("stop agent serve", slog.Any("error", err))
+		return
+	}
 }
