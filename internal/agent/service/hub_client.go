@@ -6,16 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
 type HubClient struct {
-	addr   string
+	addr   url.URL
 	client *http.Client
 }
 
-func NewHubClient(address string, client *http.Client) *HubClient {
+func NewHubClient(address url.URL, client *http.Client) *HubClient {
 	return &HubClient{client: client, addr: address}
 }
 
@@ -28,7 +29,7 @@ func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.Heartbea
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%vheartbeat", h.addr),
+		h.addr.JoinPath("heartbeat").String(),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
@@ -64,7 +65,7 @@ func (h *HubClient) SendTaskResult(ctx context.Context, id string, taskResult mo
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%vtasks/%v/result", h.addr, id),
+		h.addr.JoinPath("tasks", id, "result").String(),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
