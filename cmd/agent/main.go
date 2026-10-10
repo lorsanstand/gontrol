@@ -4,6 +4,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 )
 
 type Config struct {
-	HubURL   string     `env:"HUB_URL,required"`
+	HubURL   url.URL    `env:"HUB_URL,required"`
 	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
 }
 
