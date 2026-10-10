@@ -7,18 +7,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/utils/config"
 )
 
+type Config struct {
+	Port     int        `env:"PORT" envDefault:"5467"`
+	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
+}
+
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
+	var cfg Config
+	if err := config.Load(&cfg); err != nil {
 		fmt.Errorf("load config: %w", err)
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg}))
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg.LogLevel}))
 	logger.Info("starting gontrol-hub...")
 
 	agentStore := store.NewAgentStore()
