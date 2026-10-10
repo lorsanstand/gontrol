@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -20,7 +21,7 @@ type Config struct {
 func main() {
 	var cfg Config
 	if err := config.Load(&cfg); err != nil {
-		fmt.Errorf("load config: %w", err)
+		log.Fatalf("load config: %v", err)
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg.LogLevel}))
