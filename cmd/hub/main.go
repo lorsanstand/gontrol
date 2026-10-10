@@ -1,17 +1,24 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Errorf("load config: %w", err)
+	}
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg}))
 	logger.Info("starting gontrol-hub...")
 
 	agentStore := store.NewAgentStore()
@@ -21,7 +28,7 @@ func main() {
 	deliveryHttp.RegisterRoutes(mux, agentStore)
 
 	srv := &http.Server{
-		Addr:         ":8089",
+		Addr:         fmt.Sprintf(":%d", cfg.Port),
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
