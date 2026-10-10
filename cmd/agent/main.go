@@ -12,7 +12,7 @@ import (
 )
 
 type Config struct {
-	HostURL  string     `env:"HOST_URL,required"`
+	HubURL   string     `env:"HUB_URL,required"`
 	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
 }
 
@@ -34,7 +34,7 @@ func main() {
 		},
 	}
 
-	hub := service.NewHubClient(cfg.HostURL, client)
+	hub := service.NewHubClient(cfg.HubURL, client)
 	task := &service.TaskExecutor{}
 	agent := service.NewAgentRunner(logger, task, hub)
 
