@@ -1,16 +1,28 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/lorsanstand/gontrol/internal/agent/service"
+	"github.com/lorsanstand/gontrol/internal/utils/config"
 )
 
+type Config struct {
+	HostURL  string     `env:"HOST_URL,required"`
+	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
+}
+
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	var cfg Config
+	if err := config.Load(&cfg); err != nil {
+		log.Fatalf("load config: %v", err)
+	}
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
 	logger.Info("starting gontrol-agent...")
 
 	client := &http.Client{
@@ -22,7 +34,7 @@ func main() {
 		},
 	}
 
-	hub := service.NewHubClient("http://127.0.0.1:8089/api/v1/", client)
+	hub := service.NewHubClient(cfg.HostURL, client)
 	task := &service.TaskExecutor{}
 	agent := service.NewAgentRunner(logger, task, hub)
 
