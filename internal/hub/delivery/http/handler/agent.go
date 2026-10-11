@@ -35,6 +35,7 @@ func (a *AgentHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Написать 404 ошибку
 	agent, err := a.store.GetAgent(agentID)
 	if err != nil && !errors.Is(err, store.ErrAgentNotExist) {
 		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log/slog"
+	"uuid"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -31,7 +32,16 @@ func (a *AgentService) Get(ctx context.Context, agentID string) (modelsHub.Agent
 	return a.store.GetAgent(agentID)
 }
 
-func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.HeartbeatRequest) error {
+func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.HeartbeatRequest) (modelsHub.Agent, error) {
+	if heartbeat.AgentID == "" {
+		heartbeat.AgentID = uuid.New().String()
+	}
+
 	a.store.RegisterOrUpdate(heartbeat)
-	return nil
+
+	return modelsHub.Agent{
+		AgentID:  heartbeat.AgentID,
+		Hostname: heartbeat.Hostname,
+		OS:       heartbeat.OS,
+	}, nil
 }
