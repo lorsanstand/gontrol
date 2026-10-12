@@ -3,48 +3,42 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
-	"uuid"
 
+	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
 type HeartbeatHandler struct {
-	store *store.AgentStore
+	log *slog.Logger
+	hb  *service.HeartbeatService
 }
 
-func NewHeartbeatHandler(store *store.AgentStore) *HeartbeatHandler {
-	return &HeartbeatHandler{store: store}
+func NewHeartbeatHandler(logger *slog.Logger, heartbeat *service.HeartbeatService) *HeartbeatHandler {
+	return &HeartbeatHandler{hb: heartbeat, log: logger}
 }
 
 func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var agentRequest models.HeartbeatRequest
+	ctx := r.Context()
 
-	err := json.NewDecoder(r.Body).Decode(&agentRequest)
+	var heartbeatReq models.HeartbeatRequest
+
+	err := json.NewDecoder(r.Body).Decode(&heartbeatReq)
 	if err != nil {
+		h.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	if agentRequest.AgentID == "" {
-		agentRequest.AgentID = uuid.New().String()
-	}
-
-	h.store.RegisterOrUpdate(agentRequest)
-
-	task, err := h.store.PopTask(agentRequest.AgentID)
-	if err != nil && !errors.Is(err, store.ErrTasksNotExist) {
+	heartbeatResp, err := h.hb.Handle(ctx, heartbeatReq)
+	if err != nil && !errors.Is(err, store.ErrAgentNotExist) {
 		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	agentResponse := models.HeartbeatResponse{AgentID: agentRequest.AgentID}
-	if err == nil {
-		agentResponse.Task = &task
-	}
-
-	utils.WriteJSON(w, agentResponse, http.StatusCreated)
+	utils.WriteJSON(w, heartbeatResp, http.StatusCreated)
 }

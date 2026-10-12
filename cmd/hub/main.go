@@ -9,6 +9,7 @@ import (
 	"time"
 
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
+	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/utils/config"
 )
@@ -28,10 +29,13 @@ func main() {
 	logger.Info("starting gontrol-hub...")
 
 	agentStore := store.NewAgentStore()
+	agentService := service.NewAgentService(logger, agentStore)
+	taskService := service.NewTasksService(logger, agentStore)
+	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 
 	mux := http.NewServeMux()
 
-	deliveryHttp.RegisterRoutes(mux, agentStore)
+	deliveryHttp.RegisterRoutes(mux, logger, taskService, agentService, heartbeatService)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
