@@ -17,6 +17,7 @@ type tasksRepository interface {
 	AddTask(agentID string, task models.Task) error
 }
 
+// TaskService структура для работы с задачами для агента.
 type TaskService struct {
 	log   *slog.Logger
 	store tasksRepository
@@ -26,6 +27,8 @@ func NewTasksService(logger *slog.Logger, storage tasksRepository) *TaskService 
 	return &TaskService{store: storage, log: logger}
 }
 
+// Метод Add создает задачу и назначает ее указанному агенту.
+// Если задачу невозможно сохранить или агент не существует, возвращается ошибка.
 func (t *TaskService) Add(ctx context.Context, agentID string, taskRequest modelsHub.CreateTask) (models.Task, error) {
 	taskID := uuid.New().String()
 	task := models.Task{ID: taskID, Command: taskRequest.Command, Args: taskRequest.Args}
@@ -38,6 +41,8 @@ func (t *TaskService) Add(ctx context.Context, agentID string, taskRequest model
 	return task, nil
 }
 
+// Pop удаляет и возвращает следующую ожидающую выполнения задачу для указанного агента.
+// Возвращает nil, если у агента нет ожидающих выполнения задач.
 func (t *TaskService) Pop(ctx context.Context, agentID string) (*models.Task, error) {
 	task, err := t.store.PopTask(agentID)
 	if err != nil && !errors.Is(err, store.ErrTasksNotExist) {
