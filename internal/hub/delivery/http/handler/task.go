@@ -3,37 +3,37 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
-	"uuid"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
+	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
-	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
 type TaskHandler struct {
-	store *store.AgentStore
+	log  *slog.Logger
+	task *service.TaskService
 }
 
-func NewTaskHandler(store *store.AgentStore) *TaskHandler {
-	return &TaskHandler{store: store}
+func NewTaskHandler(logger *slog.Logger, task *service.TaskService) *TaskHandler {
+	return &TaskHandler{task: task, log: logger}
 }
 
 func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	var taskRequest modelsHub.CreateTask
 
 	err := json.NewDecoder(r.Body).Decode(&taskRequest)
 	if err != nil {
+		t.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
 		return
 	}
 
-	taskID := uuid.New().String()
-
-	task := models.Task{ID: taskID, Command: taskRequest.Command, Args: taskRequest.Args}
-
-	err = t.store.AddTask(taskRequest.AgentID, task)
+	task, err := t.task.Add(ctx, taskRequest)
 	if err != nil {
 		if errors.Is(err, store.ErrAgentNotExist) {
 			utils.WriteError(w, "Agent not found", http.StatusNotFound)
@@ -44,7 +44,7 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	utils.WriteJSON(w, task, http.StatusCreated)
 }
 
 // Написать логику сохранения результата и выдача пользователю

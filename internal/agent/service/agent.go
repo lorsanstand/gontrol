@@ -55,7 +55,7 @@ func (a *AgentRunner) Serve() error {
 
 		result, err := a.taskExec.Execute(ctx, *resp.Task)
 		if err != nil {
-			a.log.Warn("execute task", slog.Any("error", err))
+			a.log.Warn("error execute task", slog.Any("error", err))
 			continue
 		}
 
