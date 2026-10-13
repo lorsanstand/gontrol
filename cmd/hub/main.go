@@ -11,17 +11,12 @@ import (
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
-	"github.com/lorsanstand/gontrol/internal/utils/config"
+	"github.com/lorsanstand/gontrol/internal/hub/config"
 )
 
-type Config struct {
-	Port     int        `env:"PORT" envDefault:"5467"`
-	LogLevel slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
-}
-
 func main() {
-	var cfg Config
-	if err := config.Load(&cfg); err != nil {
+	cfg, err := config.Load()
+	if err != nil {
 		log.Fatalf("load config: %v", err)
 	}
 
