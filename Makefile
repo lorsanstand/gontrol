@@ -1,4 +1,6 @@
-.PHONY: build run-hub run-agent lint test
+.PHONY: build run-hub run-agent lint test create-migrate
+
+NAME ?= default_migration
 
 build:
 	go build -o bin/hub cmd/hub/main.go
@@ -15,3 +17,6 @@ lint:
 
 test:
 	go test -v -race ./...
+
+create-migrate:
+	migrate create -ext sql -dir ./migrations -seq $(NAME)

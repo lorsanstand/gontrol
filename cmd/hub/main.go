@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"log/slog"
@@ -8,10 +9,13 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/migrator"
+	"github.com/lorsanstand/gontrol/migrations"
 )
 
 func main() {
@@ -22,6 +26,23 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg.LogLevel}))
 	logger.Info("starting gontrol-hub...")
+
+	db, err := sql.Open("pgx", cfg.DatabaseURL())
+	if err != nil {
+		logger.Error("unable connect to database", slog.Any("error", err))
+		return
+	}
+	defer db.Close()
+
+	migrate, err := migrator.New(migrations.MigrationsFs, ".")
+	if err != nil {
+		logger.Error("failed to create migrator", slog.Any("error", err))
+		return
+	}
+
+	if err = migrate.Apply(db); err != nil {
+		logger.Error("unable apply to migration", slog.Any("error", err))
+	}
 
 	agentStore := store.NewAgentStore()
 	agentService := service.NewAgentService(logger, agentStore)
