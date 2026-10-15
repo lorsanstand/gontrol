@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-var ErrEditData error = errors.New("failed to change the data")
+var ErrChangeData error = errors.New("failed to change the data")
 
 func IFChangesInDB(result sql.Result) error {
 	rows, err := result.RowsAffected()
@@ -15,7 +15,7 @@ func IFChangesInDB(result sql.Result) error {
 	}
 
 	if rows == 0 {
-		return ErrEditData
+		return ErrChangeData
 	}
 
 	return nil

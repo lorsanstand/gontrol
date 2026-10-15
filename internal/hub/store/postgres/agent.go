@@ -88,7 +88,8 @@ func (a *AgentRepository) GetAllAgents(ctx context.Context) ([]modelsHub.Agent, 
 	return agents, nil
 }
 
-// EditDescByID редактирует описание агента
+// EditDescByID редактирует описание агента.
+// Возращает ошибку ErrChangeData если ни одна строка не изменилась
 func (a *AgentRepository) EditDescByID(ctx context.Context, id uuid.UUID, desc string) error {
 	query := gen.EditDescAgentByIDParams{ID: id, Description: &desc}
 
@@ -101,6 +102,7 @@ func (a *AgentRepository) EditDescByID(ctx context.Context, id uuid.UUID, desc s
 }
 
 // EditNameByID редактирует описание агента
+// Возращает ошибку ErrChangeData если ни одна строка не изменилась
 func (a *AgentRepository) EditNameByID(ctx context.Context, id uuid.UUID, name string) error {
 	query := gen.EditNameAgentByIDParams{ID: id, Description: &name}
 
