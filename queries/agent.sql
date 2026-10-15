@@ -5,7 +5,7 @@ SELECT id, os, hostname, name, description, created_at FROM Agents
 -- name: GetAllAgents :many
 SELECT id, os, hostname, name, description, created_at FROM Agents;
 
--- name: CreateAgent :execresult
+-- name: CreateAgent :one
 INSERT INTO Agents (id, name, os, hostname, description)
     VALUES ($1, $2, $3, $4, $5)
         RETURNING id, os, hostname, name, description, created_at;
@@ -14,7 +14,7 @@ INSERT INTO Agents (id, name, os, hostname, description)
 DELETE FROM Agents
     WHERE id=$1;
 
--- name: EditDescAgentByID :execresult
-UPDATE agents
+-- name: EditDescAgentByID :one
+UPDATE Agents
     SET description = $2 WHERE id=$1
-        RETURNING id, os, hostname, name, description, created_at;
+        RETURNING id, description;

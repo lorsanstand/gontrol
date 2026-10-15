@@ -7,12 +7,11 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
 
-const createAgent = `-- name: CreateAgent :execresult
+const createAgent = `-- name: CreateAgent :one
 INSERT INTO Agents (id, name, os, hostname, description)
     VALUES ($1, $2, $3, $4, $5)
         RETURNING id, os, hostname, name, description, created_at
@@ -26,14 +25,24 @@ type CreateAgentParams struct {
 	Description *string
 }
 
-func (q *Queries) CreateAgent(ctx context.Context, arg CreateAgentParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createAgent,
+func (q *Queries) CreateAgent(ctx context.Context, arg CreateAgentParams) (Agent, error) {
+	row := q.db.QueryRowContext(ctx, createAgent,
 		arg.ID,
 		arg.Name,
 		arg.Os,
 		arg.Hostname,
 		arg.Description,
 	)
+	var i Agent
+	err := row.Scan(
+		&i.ID,
+		&i.Os,
+		&i.Hostname,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const deleteAgentByID = `-- name: DeleteAgentByID :exec
@@ -46,10 +55,10 @@ func (q *Queries) DeleteAgentByID(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const editDescAgentByID = `-- name: EditDescAgentByID :execresult
-UPDATE agents
+const editDescAgentByID = `-- name: EditDescAgentByID :one
+UPDATE Agents
     SET description = $2 WHERE id=$1
-        RETURNING id, os, hostname, name, description, created_at
+        RETURNING id, description
 `
 
 type EditDescAgentByIDParams struct {
@@ -57,8 +66,16 @@ type EditDescAgentByIDParams struct {
 	Description *string
 }
 
-func (q *Queries) EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, editDescAgentByID, arg.ID, arg.Description)
+type EditDescAgentByIDRow struct {
+	ID          uuid.UUID
+	Description *string
+}
+
+func (q *Queries) EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (EditDescAgentByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, editDescAgentByID, arg.ID, arg.Description)
+	var i EditDescAgentByIDRow
+	err := row.Scan(&i.ID, &i.Description)
+	return i, err
 }
 
 const getAgentByID = `-- name: GetAgentByID :one
