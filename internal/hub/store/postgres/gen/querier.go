@@ -17,6 +17,7 @@ type Querier interface {
 	DeleteAgentByID(ctx context.Context, id uuid.UUID) (sql.Result, error)
 	DeleteTaskByID(ctx context.Context, id uuid.UUID) (sql.Result, error)
 	EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (sql.Result, error)
+	EditNameAgentByID(ctx context.Context, arg EditNameAgentByIDParams) (sql.Result, error)
 	EditResultTaskByID(ctx context.Context, arg EditResultTaskByIDParams) (sql.Result, error)
 	EditStatusTaskByID(ctx context.Context, arg EditStatusTaskByIDParams) (sql.Result, error)
 	GetAgentByID(ctx context.Context, id uuid.UUID) (Agent, error)

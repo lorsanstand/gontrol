@@ -17,3 +17,7 @@ DELETE FROM Agents
 -- name: EditDescAgentByID :execresult
 UPDATE Agents
     SET description = $2 WHERE id=$1;
+
+-- name: EditNameAgentByID :execresult
+    UPDATE Agents
+        SET description = $2 WHERE id=$1;
