@@ -28,3 +28,13 @@ sql:
             go_type:
               type: "int"
               pointer: true
+          - db_type: "jsonb"
+            nullable: true
+            go_type:
+              type: "byte"
+              slice: true
+          - db_type: "json"
+            nullable: true
+            go_type:
+              type: "byte"
+              slice: true

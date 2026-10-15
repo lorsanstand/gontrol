@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 type Agent struct {
@@ -25,7 +24,7 @@ type Task struct {
 	AgentID   uuid.UUID
 	Status    string
 	Command   string
-	Args      pqtype.NullRawMessage
+	Args      []byte
 	ExecMs    *int
 	Result    *string
 	CreatedAt time.Time

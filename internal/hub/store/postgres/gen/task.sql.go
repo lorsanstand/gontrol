@@ -10,7 +10,6 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 const createTask = `-- name: CreateTask :one
@@ -24,7 +23,7 @@ type CreateTaskParams struct {
 	AgentID uuid.UUID
 	Status  string
 	Command string
-	Args    pqtype.NullRawMessage
+	Args    []byte
 	ExecMs  *int
 	Result  *string
 }
