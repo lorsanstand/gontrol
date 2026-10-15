@@ -16,15 +16,14 @@ INSERT INTO Tasks (id, agent_id, status, command, args, exec_ms, result)
     VALUES (id=$1, agent_id=$2, status=$3, command=$4, args=$5, exec_ms=$6, result=$7)
         RETURNING id, agent_id, status, command, args, exec_ms, result, created_at;
 
--- name: EditStatusTaskByID :one
+-- name: EditStatusTaskByID :execresult
 UPDATE Tasks
-    SET status=$2 WHERE id=$1
-        RETURNING id, status;
+    SET status=$2 WHERE id=$1;
 
--- name: EditResultTaskByID :exec
+-- name: EditResultTaskByID :execresult
 UPDATE Tasks
     SET status=$2, result=$3, exec_ms=$4 WHERE id=$1;
 
--- name: DeleteTaskByID :exec
+-- name: DeleteTaskByID :execresult
 DELETE FROM Tasks
     WHERE id=$1;

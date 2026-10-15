@@ -6,6 +6,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -13,11 +14,11 @@ import (
 type Querier interface {
 	CreateAgent(ctx context.Context, arg CreateAgentParams) (Agent, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
-	DeleteAgentByID(ctx context.Context, id uuid.UUID) error
-	DeleteTaskByID(ctx context.Context, id uuid.UUID) error
-	EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (EditDescAgentByIDRow, error)
-	EditResultTaskByID(ctx context.Context, arg EditResultTaskByIDParams) error
-	EditStatusTaskByID(ctx context.Context, arg EditStatusTaskByIDParams) (EditStatusTaskByIDRow, error)
+	DeleteAgentByID(ctx context.Context, id uuid.UUID) (sql.Result, error)
+	DeleteTaskByID(ctx context.Context, id uuid.UUID) (sql.Result, error)
+	EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (sql.Result, error)
+	EditResultTaskByID(ctx context.Context, arg EditResultTaskByIDParams) (sql.Result, error)
+	EditStatusTaskByID(ctx context.Context, arg EditStatusTaskByIDParams) (sql.Result, error)
 	GetAgentByID(ctx context.Context, id uuid.UUID) (Agent, error)
 	GetAllAgents(ctx context.Context) ([]Agent, error)
 	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)

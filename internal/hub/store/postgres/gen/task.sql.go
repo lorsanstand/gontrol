@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
@@ -52,17 +53,16 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
-const deleteTaskByID = `-- name: DeleteTaskByID :exec
+const deleteTaskByID = `-- name: DeleteTaskByID :execresult
 DELETE FROM Tasks
     WHERE id=$1
 `
 
-func (q *Queries) DeleteTaskByID(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteTaskByID, id)
-	return err
+func (q *Queries) DeleteTaskByID(ctx context.Context, id uuid.UUID) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteTaskByID, id)
 }
 
-const editResultTaskByID = `-- name: EditResultTaskByID :exec
+const editResultTaskByID = `-- name: EditResultTaskByID :execresult
 UPDATE Tasks
     SET status=$2, result=$3, exec_ms=$4 WHERE id=$1
 `
@@ -74,20 +74,18 @@ type EditResultTaskByIDParams struct {
 	ExecMs *int
 }
 
-func (q *Queries) EditResultTaskByID(ctx context.Context, arg EditResultTaskByIDParams) error {
-	_, err := q.db.ExecContext(ctx, editResultTaskByID,
+func (q *Queries) EditResultTaskByID(ctx context.Context, arg EditResultTaskByIDParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, editResultTaskByID,
 		arg.ID,
 		arg.Status,
 		arg.Result,
 		arg.ExecMs,
 	)
-	return err
 }
 
-const editStatusTaskByID = `-- name: EditStatusTaskByID :one
+const editStatusTaskByID = `-- name: EditStatusTaskByID :execresult
 UPDATE Tasks
     SET status=$2 WHERE id=$1
-        RETURNING id, status
 `
 
 type EditStatusTaskByIDParams struct {
@@ -95,16 +93,8 @@ type EditStatusTaskByIDParams struct {
 	Status string
 }
 
-type EditStatusTaskByIDRow struct {
-	ID     uuid.UUID
-	Status string
-}
-
-func (q *Queries) EditStatusTaskByID(ctx context.Context, arg EditStatusTaskByIDParams) (EditStatusTaskByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, editStatusTaskByID, arg.ID, arg.Status)
-	var i EditStatusTaskByIDRow
-	err := row.Scan(&i.ID, &i.Status)
-	return i, err
+func (q *Queries) EditStatusTaskByID(ctx context.Context, arg EditStatusTaskByIDParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, editStatusTaskByID, arg.ID, arg.Status)
 }
 
 const getTaskByID = `-- name: GetTaskByID :one

@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -45,20 +46,18 @@ func (q *Queries) CreateAgent(ctx context.Context, arg CreateAgentParams) (Agent
 	return i, err
 }
 
-const deleteAgentByID = `-- name: DeleteAgentByID :exec
+const deleteAgentByID = `-- name: DeleteAgentByID :execresult
 DELETE FROM Agents
     WHERE id=$1
 `
 
-func (q *Queries) DeleteAgentByID(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteAgentByID, id)
-	return err
+func (q *Queries) DeleteAgentByID(ctx context.Context, id uuid.UUID) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteAgentByID, id)
 }
 
-const editDescAgentByID = `-- name: EditDescAgentByID :one
+const editDescAgentByID = `-- name: EditDescAgentByID :execresult
 UPDATE Agents
     SET description = $2 WHERE id=$1
-        RETURNING id, description
 `
 
 type EditDescAgentByIDParams struct {
@@ -66,16 +65,8 @@ type EditDescAgentByIDParams struct {
 	Description *string
 }
 
-type EditDescAgentByIDRow struct {
-	ID          uuid.UUID
-	Description *string
-}
-
-func (q *Queries) EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (EditDescAgentByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, editDescAgentByID, arg.ID, arg.Description)
-	var i EditDescAgentByIDRow
-	err := row.Scan(&i.ID, &i.Description)
-	return i, err
+func (q *Queries) EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, editDescAgentByID, arg.ID, arg.Description)
 }
 
 const getAgentByID = `-- name: GetAgentByID :one
