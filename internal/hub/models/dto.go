@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,23 @@ func (s TaskStatus) IsValid() bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func (s TaskStatus) Parse(str string) (TaskStatus, error) {
+	switch str {
+	case "pending":
+		return TaskStatusPending, nil
+	case "processing":
+		return TaskStatusProcessing, nil
+	case "completed":
+		return TaskStatusCompleted, nil
+	case "canceled":
+		return TaskStatusCanceled, nil
+	case "error":
+		return TaskStatusError, nil
+	default:
+		return TaskStatusError, fmt.Errorf("failed convert to status")
 	}
 }
 

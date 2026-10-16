@@ -8,7 +8,7 @@ import (
 
 var ErrChangeData error = errors.New("failed to change the data")
 
-func IFChangesInDB(result sql.Result) error {
+func ifChangesInDB(result sql.Result) error {
 	rows, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("get affected rows: %w", err)

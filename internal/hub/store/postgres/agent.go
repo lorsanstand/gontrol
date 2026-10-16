@@ -98,7 +98,7 @@ func (a *AgentRepository) EditDescByID(ctx context.Context, id uuid.UUID, desc s
 		return fmt.Errorf("update agents into db: %w", err)
 	}
 
-	return IFChangesInDB(result)
+	return ifChangesInDB(result)
 }
 
 // EditNameByID редактирует описание агента
@@ -108,8 +108,8 @@ func (a *AgentRepository) EditNameByID(ctx context.Context, id uuid.UUID, name s
 
 	result, err := a.q.EditNameAgentByID(ctx, query)
 	if err != nil {
-		return fmt.Errorf("update agents into db: %w", err)
+		return fmt.Errorf("update agent into db: %w", err)
 	}
 
-	return IFChangesInDB(result)
+	return ifChangesInDB(result)
 }
