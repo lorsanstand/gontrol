@@ -10,7 +10,7 @@ import (
 
 func toTask(taskDB postgres.Task) (*modelsHub.Task, error) {
 	argsDB := new(map[string]string)
-	status, err := modelsHub.TaskStatus.Parse(taskDB.Status)
+	status, err := modelsHub.TaskStatusParse(taskDB.Status)
 	if err != nil {
 		return nil, err
 	}

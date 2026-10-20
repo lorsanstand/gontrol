@@ -26,7 +26,7 @@ func (s TaskStatus) IsValid() bool {
 	}
 }
 
-func (s TaskStatus) Parse(str string) (TaskStatus, error) {
+func TaskStatusParse(str string) (TaskStatus, error) {
 	switch str {
 	case "pending":
 		return TaskStatusPending, nil
@@ -39,7 +39,7 @@ func (s TaskStatus) Parse(str string) (TaskStatus, error) {
 	case "error":
 		return TaskStatusError, nil
 	default:
-		return TaskStatusError, fmt.Errorf("failed convert to status")
+		return "", fmt.Errorf("failed convert to status")
 	}
 }
 
