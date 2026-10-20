@@ -20,6 +20,7 @@ func NewTaskRepository(db *sql.DB) *TaskRepository {
 	return &TaskRepository{db: db, q: gen.New(db)}
 }
 
+// CreateTask создает новую задачу для определенного агента.
 func (t *TaskRepository) CreateTask(ctx context.Context, task modelsHub.Task) (*modelsHub.Task, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -49,6 +50,7 @@ func (t *TaskRepository) CreateTask(ctx context.Context, task modelsHub.Task) (*
 	return toTask(taskDB)
 }
 
+// GetTaskByID возращает задачу по id.
 func (t *TaskRepository) GetTaskByID(ctx context.Context, id uuid.UUID) (*modelsHub.Task, error) {
 	taskDB, err := t.q.GetTaskByID(ctx, id)
 	if err != nil {
@@ -58,6 +60,7 @@ func (t *TaskRepository) GetTaskByID(ctx context.Context, id uuid.UUID) (*models
 	return toTask(taskDB)
 }
 
+// GetTasksByAgentID возращает задачи по id агента.
 func (t *TaskRepository) GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]modelsHub.Task, error) {
 	tasksDB, err := t.q.GetTasksByAgentID(ctx, agentID)
 	if err != nil {
@@ -78,6 +81,7 @@ func (t *TaskRepository) GetTasksByAgentID(ctx context.Context, agentID uuid.UUI
 	return tasks, nil
 }
 
+// NextTaskByAgentID возращает следующую задачу в статусе pending по id агента.
 func (t *TaskRepository) NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error) {
 	taskDB, err := t.q.NextTaskByAgentID(ctx, agentID)
 	if err != nil {
@@ -87,6 +91,8 @@ func (t *TaskRepository) NextTaskByAgentID(ctx context.Context, agentID uuid.UUI
 	return toTask(taskDB)
 }
 
+// EditStatusByID изменяет статус по id задачи.
+// Возращает ошибку ErrChangeData если ни одна строка не изменилась
 func (t *TaskRepository) EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error {
 	taskReq := gen.EditStatusTaskByIDParams{ID: id, Status: string(status)}
 
@@ -98,6 +104,8 @@ func (t *TaskRepository) EditStatusByID(ctx context.Context, id uuid.UUID, statu
 	return ifChangesInDB(result)
 }
 
+// EditResultByID изменяет результат статус и время выполнения задачи по id задачи.
+// Возращает ошибку ErrChangeData если ни одна строка не изменилась
 func (t *TaskRepository) EditResultByID(ctx context.Context,
 	id uuid.UUID,
 	resultStr string,

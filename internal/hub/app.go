@@ -12,6 +12,7 @@ import (
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/migrator"
 	"github.com/lorsanstand/gontrol/migrations"
 )
@@ -28,12 +29,13 @@ func NewApp() (*App, error) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg.LogLevel}))
-	//logger.Info("starting gontrol-hub...")
 
 	return &App{logger: logger, cfg: cfg}, nil
 }
 
 func (a *App) Run() int {
+	a.logger.Info("starting gontrol-hub...")
+
 	db, err := sql.Open("pgx", a.cfg.DatabaseURL())
 	if err != nil {
 		a.logger.Error("unable connect to database", slog.Any("error", err))
@@ -45,6 +47,9 @@ func (a *App) Run() int {
 		a.logger.Error("failed to apply migrations", slog.Any("error", err))
 		return 1
 	}
+
+	postgres.NewAgentRepository(db)
+	postgres.NewTaskRepository(db)
 
 	agentStore := store.NewAgentStore()
 	agentService := service.NewAgentService(a.logger, agentStore)
