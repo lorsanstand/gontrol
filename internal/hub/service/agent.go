@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"uuid"
 
@@ -10,9 +11,11 @@ import (
 )
 
 type agentRepository interface {
-	RegisterOrUpdate(agentRequest models.HeartbeatRequest)
-	GetAgent(agentID string) (modelsHub.Agent, error)
-	GetAllAgents() []modelsHub.Agent
+	CreateAgent(ctx context.Context, agent modelsHub.Agent) (*modelsHub.Agent, error)
+	GetAgentByID(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error)
+	GetAllAgents(ctx context.Context) ([]modelsHub.Agent, error)
+	EditDescByID(ctx context.Context, id uuid.UUID, desc string) error
+	EditNameByID(ctx context.Context, id uuid.UUID, name string) error
 }
 
 // AgentService структура для работы с агентами.
@@ -28,26 +31,37 @@ func NewAgentService(logger *slog.Logger, storage agentRepository) *AgentService
 // GetAll возращает всех агентов в хранилище.
 // Если агентов нет возращает пустой список.
 func (a *AgentService) GetAll(ctx context.Context) ([]modelsHub.Agent, error) {
-	return a.store.GetAllAgents(), nil
+	return a.store.GetAllAgents(ctx)
 }
 
 // Get возращает агента по его ID.
 // Если агента не существует, вернет ошибку ErrAgentNotExist из store.
-func (a *AgentService) Get(ctx context.Context, agentID string) (modelsHub.Agent, error) {
-	return a.store.GetAgent(agentID)
+func (a *AgentService) Get(ctx context.Context, agentID uuid.UUID) (*modelsHub.Agent, error) {
+	return a.store.GetAgentByID(ctx, agentID)
 }
 
 // RegisterOrUpdate регистрирует агента если передан пустой AgentID, и обновляет данные если агент уже зарегистрирован.
-func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.HeartbeatRequest) (modelsHub.Agent, error) {
-	if heartbeat.AgentID == "" {
-		heartbeat.AgentID = uuid.New().String()
+func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.HeartbeatRequest) (*modelsHub.Agent, error) {
+	if heartbeat.AgentID != "" {
+		a.log.Debug("agent err")
+		agentID, err := uuid.Parse(heartbeat.AgentID)
+		if err != nil {
+			return nil, fmt.Errorf("parse agent ID to uuid type: %w", err)
+		}
+
+		agentDB, err := a.store.GetAgentByID(ctx, agentID)
+		if err != nil {
+			return nil, fmt.Errorf("get agent: %w", err)
+		}
+		return agentDB, nil
 	}
 
-	a.store.RegisterOrUpdate(heartbeat)
+	newAgent := modelsHub.Agent{Hostname: heartbeat.Hostname, OS: heartbeat.OS}
 
-	return modelsHub.Agent{
-		AgentID:  heartbeat.AgentID,
-		Hostname: heartbeat.Hostname,
-		OS:       heartbeat.OS,
-	}, nil
+	agentDB, err := a.store.CreateAgent(ctx, newAgent)
+	if err != nil {
+		return nil, fmt.Errorf("create agent: %w", err)
+	}
+
+	return agentDB, nil
 }
