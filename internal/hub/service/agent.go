@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"uuid"
+
+	"github.com/google/uuid"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -64,4 +65,16 @@ func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.He
 	}
 
 	return agentDB, nil
+}
+
+// EditNameAgent изменяет имя агента.
+// Возращает ErrChangeData если агент не найден.
+func (a *AgentService) EditNameAgent(ctx context.Context, id uuid.UUID, newName string) error {
+	return a.store.EditNameByID(ctx, id, newName)
+}
+
+// EditDescAgent изменяет описание агента
+// Возращает ErrChangeData если агент не найден
+func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc string) error {
+	return a.store.EditNameByID(ctx, id, newDesc)
 }

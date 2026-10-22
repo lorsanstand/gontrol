@@ -48,11 +48,11 @@ func (a *App) Run() int {
 		return 1
 	}
 
-	postgres.NewAgentRepository(db)
+	agentRepo := postgres.NewAgentRepository(db)
 	postgres.NewTaskRepository(db)
 
 	agentStore := store.NewAgentStore()
-	agentService := service.NewAgentService(a.logger, agentStore)
+	agentService := service.NewAgentService(a.logger, agentRepo)
 	taskService := service.NewTasksService(a.logger, agentStore)
 	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 
