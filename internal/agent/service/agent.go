@@ -22,13 +22,12 @@ func NewAgentRunner(log *slog.Logger, tasker *TaskExecutor, hub *HubClient) *Age
 }
 
 func (a *AgentRunner) Serve() error {
-	agentID := ""
 	hostname, err := os.Hostname()
 	if err != nil {
 		return fmt.Errorf("get hostname: %w", err)
 	}
 	OS := runtime.GOOS
-	hb := models.HeartbeatRequest{AgentID: agentID, Hostname: hostname, OS: OS}
+	hb := models.HeartbeatRequest{AgentID: nil, Hostname: hostname, OS: OS}
 
 	for {
 		time.Sleep(5 * time.Second)
@@ -43,9 +42,9 @@ func (a *AgentRunner) Serve() error {
 			continue
 		}
 
-		if hb.AgentID == "" {
-			slog.Info("new agent id", slog.String("agent id", resp.AgentID))
-			hb.AgentID = resp.AgentID
+		if hb.AgentID == nil {
+			slog.Info("new agent id", slog.Any("agent id", resp.AgentID))
+			hb.AgentID = &resp.AgentID
 		}
 
 		if resp.Task == nil {

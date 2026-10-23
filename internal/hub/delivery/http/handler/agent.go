@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
-	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
@@ -53,15 +52,9 @@ func (a *AgentHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	agent, err := a.agent.Get(ctx, id)
-	if err != nil && !errors.Is(err, store.ErrAgentNotExist) {
+	if err != nil {
 		a.log.Error("error get agent", slog.Any("error", err), slog.String("agentID", agentID), slog.Any("error", err))
 		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	if errors.Is(err, store.ErrAgentNotExist) {
-		a.log.Debug("agent not found", slog.String("agentID", agentID))
-		utils.WriteError(w, "Agent not found", http.StatusNotFound)
 		return
 	}
 

@@ -8,7 +8,6 @@ import (
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
-	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
@@ -37,11 +36,6 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := t.task.Add(ctx, taskRequest)
 	if err != nil {
-		if errors.Is(err, store.ErrAgentNotExist) {
-			utils.WriteError(w, "Agent not found", http.StatusNotFound)
-			return
-		}
-
 		utils.WriteError(w, "Failed to save task", http.StatusBadGateway)
 		return
 	}
