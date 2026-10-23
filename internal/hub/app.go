@@ -42,7 +42,7 @@ func (a *App) Run() int {
 	}
 	defer db.Close()
 
-	if err = a.applyMigrations(db); err != nil {
+	if err = a.applyMigrations(); err != nil {
 		a.logger.Error("failed to apply migrations", slog.Any("error", err))
 		return 1
 	}
@@ -74,13 +74,19 @@ func (a *App) Run() int {
 	return 0
 }
 
-func (a *App) applyMigrations(DB *sql.DB) error {
+func (a *App) applyMigrations() error {
+	migrationDB, err := sql.Open("pgx", a.cfg.DatabaseURL())
+	if err != nil {
+		return fmt.Errorf("open migration database: %w", err)
+	}
+	defer migrationDB.Close()
+
 	migrate, err := migrator.New(migrations.MigrationsFs, ".")
 	if err != nil {
 		return fmt.Errorf("create migrator: %w", err)
 	}
 
-	if err = migrate.Apply(DB); err != nil {
+	if err = migrate.Apply(migrationDB); err != nil {
 		return fmt.Errorf("apply to migration: %w", err)
 	}
 
