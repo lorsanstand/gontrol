@@ -112,8 +112,8 @@ func (t *TaskRepository) EditResultByID(ctx context.Context,
 	status modelsHub.TaskStatus,
 	execTimeMS int) error {
 
-	taskResultDB := gen.EditResultTaskByIDParams {
-		ID: id,
+	taskResultDB := gen.EditResultTaskByIDParams{
+		ID:     id,
 		Result: &resultStr,
 		Status: string(status),
 		ExecMs: &execTimeMS,
