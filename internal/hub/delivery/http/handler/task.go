@@ -2,13 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
-	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
@@ -36,7 +34,7 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 
 	task, err := t.task.Add(ctx, taskRequest)
 	if err != nil {
-		utils.WriteError(w, "Failed to save task", http.StatusBadGateway)
+		ReturnErrors(w, "error create new task", err)
 		return
 	}
 
@@ -57,12 +55,7 @@ func (t *TaskHandler) PostResultTask(w http.ResponseWriter, r *http.Request) {
 
 	err = t.task.SaveResult(ctx, taskResult.ID, taskResult.Result, taskResult.TimeExecMS)
 	if err != nil {
-		if errors.Is(err, postgres.ErrChangeData) {
-			t.log.Debug("error change data", slog.Any("error", err))
-			utils.WriteError(w, "Task not found", http.StatusNotFound)
-			return
-		}
-		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
+		ReturnErrors(w, "error save task result", err)
 		return
 	}
 
