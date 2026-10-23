@@ -25,10 +25,12 @@ func (h *HeartbeatService) Handle(ctx context.Context, heartbeatReq models.Heart
 		return models.HeartbeatResponse{}, fmt.Errorf("register or update agent: %w", err)
 	}
 
-	task, err := h.task.Pop(ctx, agent.AgentID)
+	task, err := h.task.Pop(ctx, agent.ID)
 	if err != nil {
 		return models.HeartbeatResponse{}, fmt.Errorf("pop task: %w", err)
 	}
 
-	return models.HeartbeatResponse{AgentID: agent.AgentID, Task: task}, nil
+	taskAgent := models.Task{ID: task.ID, Command: task.Command, Args: task.Args}
+
+	return models.HeartbeatResponse{AgentID: agent.ID, Task: &taskAgent}, nil
 }
