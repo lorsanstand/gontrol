@@ -98,8 +98,12 @@ func (a *AgentHandler) EditName(w http.ResponseWriter, r *http.Request) {
 
 	err = a.agent.EditNameAgent(ctx, id, body.Name)
 	if err != nil {
-		if errors.Is(err, postgres.ErrChangeData) {
-			a.log.Debug("error change data", slog.Any("error", err))
+		if err != nil {
+			if errors.Is(err, postgres.ErrChangeData) {
+				a.log.Debug("error change data", slog.Any("error", err))
+				utils.WriteError(w, "Agent not found", http.StatusNotFound)
+				return
+			}
 			utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -140,10 +144,12 @@ func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, postgres.ErrChangeData) {
 			a.log.Debug("error change data", slog.Any("error", err))
-			utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
+			utils.WriteError(w, "Agent not found", http.StatusNotFound)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
+		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }

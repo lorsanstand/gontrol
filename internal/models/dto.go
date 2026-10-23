@@ -15,9 +15,9 @@ type TaskResult struct {
 }
 
 type HeartbeatRequest struct {
-	AgentID  uuid.UUID `json:"agent_id"`
-	Hostname string    `json:"hostname"`
-	OS       string    `json:"os"`
+	AgentID  *uuid.UUID `json:"agent_id"`
+	Hostname string     `json:"hostname"`
+	OS       string     `json:"os"`
 }
 
 type HeartbeatResponse struct {

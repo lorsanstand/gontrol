@@ -62,3 +62,9 @@ type Task struct {
 	Result    *string           `json:"result"`
 	CreatedAt time.Time         `json:"created_at"`
 }
+
+type CreateTask struct {
+	AgentID uuid.UUID         `json:"agent_id"`
+	Command string            `json:"command"`
+	Args    map[string]string `json:"args"`
+}

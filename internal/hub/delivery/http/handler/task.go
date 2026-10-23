@@ -9,6 +9,8 @@ import (
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
+	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
@@ -47,7 +49,28 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, task, http.StatusCreated)
 }
 
-// Написать логику сохранения результата и выдача пользователю
 func (t *TaskHandler) PostResultTask(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var taskResult models.TaskResult
+
+	defer r.Body.Close()
+	err := json.NewDecoder(r.Body).Decode(&taskResult)
+	if err != nil {
+		t.log.Debug("invalid json", slog.Any("error", err))
+		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	err = t.task.SaveResult(ctx, taskResult.ID, taskResult.Result, taskResult.TimeExecMS)
+	if err != nil {
+		if errors.Is(err, postgres.ErrChangeData) {
+			t.log.Debug("error change data", slog.Any("error", err))
+			utils.WriteError(w, "Task not found", http.StatusNotFound)
+			return
+		}
+		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 }
