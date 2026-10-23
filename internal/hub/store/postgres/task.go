@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
+	"github.com/lorsanstand/gontrol/internal/hub/store"
 	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
 )
 
@@ -51,9 +53,14 @@ func (t *TaskRepository) CreateTask(ctx context.Context, task modelsHub.Task) (*
 }
 
 // GetTaskByID возращает задачу по id.
+// Если задачи нет то возращает store.ErrNotFound.
 func (t *TaskRepository) GetTaskByID(ctx context.Context, id uuid.UUID) (*modelsHub.Task, error) {
 	taskDB, err := t.q.GetTaskByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+
 		return nil, fmt.Errorf("select agent into DB: %w", err)
 	}
 
@@ -82,9 +89,14 @@ func (t *TaskRepository) GetTasksByAgentID(ctx context.Context, agentID uuid.UUI
 }
 
 // NextTaskByAgentID возращает следующую задачу в статусе pending по id агента.
+// Если задач нет то возращает store.ErrNotFound.
 func (t *TaskRepository) NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error) {
 	taskDB, err := t.q.NextTaskByAgentID(ctx, agentID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+
 		return nil, fmt.Errorf("select task into db: %w", err)
 	}
 
@@ -92,7 +104,7 @@ func (t *TaskRepository) NextTaskByAgentID(ctx context.Context, agentID uuid.UUI
 }
 
 // EditStatusByID изменяет статус по id задачи.
-// Возращает ошибку ErrChangeData если ни одна строка не изменилась
+// Возращает ошибку store.ErrChangeData если ни одна строка не изменилась
 func (t *TaskRepository) EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error {
 	taskReq := gen.EditStatusTaskByIDParams{ID: id, Status: string(status)}
 
@@ -105,7 +117,7 @@ func (t *TaskRepository) EditStatusByID(ctx context.Context, id uuid.UUID, statu
 }
 
 // EditResultByID изменяет результат статус и время выполнения задачи по id задачи.
-// Возращает ошибку ErrChangeData если ни одна строка не изменилась
+// Возращает ошибку store.ErrChangeData если ни одна строка не изменилась
 func (t *TaskRepository) EditResultByID(ctx context.Context,
 	id uuid.UUID,
 	resultStr string,

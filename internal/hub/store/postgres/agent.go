@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/lorsanstand/gontrol/internal/hub/store"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
@@ -50,9 +52,14 @@ func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent
 }
 
 // GetAgentByID возращает агента по ID.
+// Если агента нет то возращает store.ErrNotFound
 func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error) {
 	agentDB, err := a.q.GetAgentByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, store.ErrNotFound
+		}
+
 		return nil, fmt.Errorf("select agent into db: %w", err)
 	}
 
@@ -89,7 +96,7 @@ func (a *AgentRepository) GetAllAgents(ctx context.Context) ([]modelsHub.Agent, 
 }
 
 // EditDescByID редактирует описание агента.
-// Возращает ошибку ErrChangeData если ни одна строка не изменилась
+// Возращает ошибку store.ErrChangeData если ни одна строка не изменилась
 func (a *AgentRepository) EditDescByID(ctx context.Context, id uuid.UUID, desc string) error {
 	query := gen.EditDescAgentByIDParams{ID: id, Description: &desc}
 
@@ -102,7 +109,7 @@ func (a *AgentRepository) EditDescByID(ctx context.Context, id uuid.UUID, desc s
 }
 
 // EditNameByID редактирует описание агента
-// Возращает ошибку ErrChangeData если ни одна строка не изменилась
+// Возращает ошибку store.ErrChangeData если ни одна строка не изменилась
 func (a *AgentRepository) EditNameByID(ctx context.Context, id uuid.UUID, name string) error {
 	query := gen.EditNameAgentByIDParams{ID: id, Description: &name}
 

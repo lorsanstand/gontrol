@@ -2,11 +2,10 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-)
 
-var ErrChangeData error = errors.New("failed to change the data")
+	"github.com/lorsanstand/gontrol/internal/hub/store"
+)
 
 func ifChangesInDB(result sql.Result) error {
 	rows, err := result.RowsAffected()
@@ -15,7 +14,7 @@ func ifChangesInDB(result sql.Result) error {
 	}
 
 	if rows == 0 {
-		return ErrChangeData
+		return store.ErrChangeData
 	}
 
 	return nil
