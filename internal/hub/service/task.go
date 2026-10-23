@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
+	"github.com/lorsanstand/gontrol/internal/hub/store"
 )
 
 type tasksRepository interface {
@@ -51,10 +53,13 @@ func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) 
 
 // Pop меняет статус на processing и возвращает следующую ожидающую выполнения задачу для указанного агента.
 // Возвращает nil, если у агента нет ожидающих выполнения задач.
-// Возращает ErrChangeData если агент не найден.
+// Возращает ErrTaskNotFound если задач нет.
 func (t *TaskService) Pop(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error) {
 	taskDB, err := t.store.NextTaskByAgentID(ctx, agentID)
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrTaskNotFound
+		}
 		return nil, fmt.Errorf("get next task: %w", err)
 	}
 
@@ -67,10 +72,14 @@ func (t *TaskService) Pop(ctx context.Context, agentID uuid.UUID) (*modelsHub.Ta
 }
 
 // SaveResult сохраняет результат задачи, время выполнения и меняет статус на completed.
-// Возращает ErrChangeData если агент не найден.
+// Возращает ErrTaskNotFound если задача не существует.
 func (t *TaskService) SaveResult(ctx context.Context, id uuid.UUID, result string, execMS int) error {
 	err := t.store.EditResultByID(ctx, id, result, modelsHub.TaskStatusCompleted, execMS)
 	if err != nil {
+		if errors.Is(err, store.ErrChangeData) {
+			return ErrTaskNotFound
+		}
+
 		return fmt.Errorf("save result task: %w", err)
 	}
 

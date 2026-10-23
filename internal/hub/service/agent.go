@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/lorsanstand/gontrol/internal/hub/store"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -36,21 +38,25 @@ func (a *AgentService) GetAll(ctx context.Context) ([]modelsHub.Agent, error) {
 }
 
 // Get возращает агента по его ID.
-// Если агента не существует, вернет ошибку ErrAgentNotExist из store.
-func (a *AgentService) Get(ctx context.Context, agentID uuid.UUID) (*modelsHub.Agent, error) {
-	return a.store.GetAgentByID(ctx, agentID)
+// Если агента не существует, вернет ошибку ErrAgentNotFound.
+func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error) {
+	agentDB, err := a.store.GetAgentByID(ctx, id)
+
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+		return nil, fmt.Errorf("get agent: %w", err)
+	}
+
+	return agentDB, nil
 }
 
 // RegisterOrUpdate регистрирует агента если передан пустой AgentID, и обновляет данные если агент уже зарегистрирован.
 func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.HeartbeatRequest) (*modelsHub.Agent, error) {
 	if heartbeat.AgentID != nil {
 		a.log.Debug("agent exists", slog.Any("agentID", heartbeat.AgentID))
-
-		agentDB, err := a.store.GetAgentByID(ctx, *heartbeat.AgentID)
-		if err != nil {
-			return nil, fmt.Errorf("get agent: %w", err)
-		}
-		return agentDB, nil
+		return a.Get(ctx, *heartbeat.AgentID)
 	}
 
 	newAgent := modelsHub.Agent{Hostname: heartbeat.Hostname, OS: heartbeat.OS}
@@ -64,13 +70,27 @@ func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.He
 }
 
 // EditNameAgent изменяет имя агента.
-// Возращает ErrChangeData если агент не найден.
+// Возращает ErrAgentNotFound если агент не найден.
 func (a *AgentService) EditNameAgent(ctx context.Context, id uuid.UUID, newName string) error {
-	return a.store.EditNameByID(ctx, id, newName)
+	if err := a.store.EditNameByID(ctx, id, newName); err != nil {
+		if errors.Is(err, store.ErrChangeData) {
+			return ErrAgentNotFound
+		}
+		return fmt.Errorf("edit agent name: %w", err)
+	}
+
+	return nil
 }
 
 // EditDescAgent изменяет описание агента
-// Возращает ErrChangeData если агент не найден
+// Возращает ErrAgentNotFound если агент не найден
 func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc string) error {
-	return a.store.EditNameByID(ctx, id, newDesc)
+	if err := a.store.EditDescByID(ctx, id, newDesc); err != nil {
+		if errors.Is(err, store.ErrChangeData) {
+			return ErrAgentNotFound
+		}
+		return fmt.Errorf("edit agent description: %w", err)
+	}
+
+	return nil
 }
