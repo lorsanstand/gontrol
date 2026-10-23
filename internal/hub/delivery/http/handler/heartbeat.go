@@ -2,12 +2,10 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/lorsanstand/gontrol/internal/hub/service"
-	"github.com/lorsanstand/gontrol/internal/hub/store"
 	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
@@ -35,8 +33,8 @@ func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	heartbeatResp, err := h.hb.Handle(ctx, heartbeatReq)
-	if err != nil && !errors.Is(err, store.ErrAgentNotExist) {
-		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
+	if err != nil {
+		ReturnErrors(w, "failed to save heartbeat", err)
 		return
 	}
 

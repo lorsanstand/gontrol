@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/google/uuid"
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
@@ -56,7 +57,7 @@ func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.Heartbea
 	return result, nil
 }
 
-func (h *HubClient) SendTaskResult(ctx context.Context, id string, taskResult models.TaskResult) error {
+func (h *HubClient) SendTaskResult(ctx context.Context, id uuid.UUID, taskResult models.TaskResult) error {
 	jsonData, err := json.Marshal(taskResult)
 	if err != nil {
 		return fmt.Errorf("marshal task result request: %w", err)
@@ -65,7 +66,7 @@ func (h *HubClient) SendTaskResult(ctx context.Context, id string, taskResult mo
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		h.addr.JoinPath("tasks", id, "result").String(),
+		h.addr.JoinPath("tasks", id.String(), "result").String(),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {

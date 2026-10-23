@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS Agents (
+    id UUID PRIMARY KEY,
+    os VARCHAR(50) NOT NULL,
+    hostname VARCHAR(50) NOT NULL,
+    name VARCHAR(30) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

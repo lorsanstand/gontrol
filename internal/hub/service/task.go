@@ -5,16 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"uuid"
 
+	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
-	"github.com/lorsanstand/gontrol/internal/models"
 )
 
 type tasksRepository interface {
-	PopTask(agentID string) (models.Task, error)
-	AddTask(agentID string, task models.Task) error
+	CreateTask(ctx context.Context, task modelsHub.Task) (*modelsHub.Task, error)
+	GetTaskByID(ctx context.Context, id uuid.UUID) (*modelsHub.Task, error)
+	GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]modelsHub.Task, error)
+	NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error)
+	EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error
+	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
 }
 
 // TaskService структура для работы с задачами для агента.
@@ -29,29 +32,56 @@ func NewTasksService(logger *slog.Logger, storage tasksRepository) *TaskService 
 
 // Метод Add создает задачу и назначает ее указанному агенту.
 // Если задачу невозможно сохранить или агент не существует, возвращается ошибка.
-func (t *TaskService) Add(ctx context.Context, taskRequest modelsHub.CreateTask) (models.Task, error) {
-	taskID := uuid.New().String()
-	task := models.Task{ID: taskID, Command: taskRequest.Command, Args: taskRequest.Args}
+func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) (*modelsHub.Task, error) {
 
-	err := t.store.AddTask(taskRequest.AgentID, task)
-	if err != nil {
-		return models.Task{}, fmt.Errorf("add task in storage: %w", err)
+	task := modelsHub.Task{
+		AgentID: taskCreate.AgentID,
+		Status:  modelsHub.TaskStatusPending,
+		Command: taskCreate.Command,
+		Args:    taskCreate.Args,
+		ExecMs:  nil,
+		Result:  nil,
 	}
 
-	return task, nil
+	taskDB, err := t.store.CreateTask(ctx, task)
+	if err != nil {
+		return nil, fmt.Errorf("create task: %w", err)
+	}
+
+	return taskDB, nil
 }
 
-// Pop удаляет и возвращает следующую ожидающую выполнения задачу для указанного агента.
+// Pop меняет статус на processing и возвращает следующую ожидающую выполнения задачу для указанного агента.
 // Возвращает nil, если у агента нет ожидающих выполнения задач.
-func (t *TaskService) Pop(ctx context.Context, agentID string) (*models.Task, error) {
-	task, err := t.store.PopTask(agentID)
-	if err != nil && !errors.Is(err, store.ErrTasksNotExist) {
-		return nil, fmt.Errorf("pop task in storage: %w", err)
+// Возращает ErrTaskNotFound если задач нет.
+func (t *TaskService) Pop(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error) {
+	taskDB, err := t.store.NextTaskByAgentID(ctx, agentID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrTaskNotFound
+		}
+		return nil, fmt.Errorf("get next task: %w", err)
 	}
 
-	if errors.Is(err, store.ErrTasksNotExist) {
-		return nil, nil
+	err = t.store.EditStatusByID(ctx, taskDB.ID, modelsHub.TaskStatusProcessing)
+	if err != nil {
+		return nil, fmt.Errorf("edit status task: %w", err)
 	}
 
-	return &task, nil
+	return taskDB, nil
+}
+
+// SaveResult сохраняет результат задачи, время выполнения и меняет статус на completed.
+// Возращает ErrTaskNotFound если задача не существует.
+func (t *TaskService) SaveResult(ctx context.Context, id uuid.UUID, result string, execMS int) error {
+	err := t.store.EditResultByID(ctx, id, result, modelsHub.TaskStatusCompleted, execMS)
+	if err != nil {
+		if errors.Is(err, store.ErrChangeData) {
+			return ErrTaskNotFound
+		}
+
+		return fmt.Errorf("save result task: %w", err)
+	}
+
+	return nil
 }
