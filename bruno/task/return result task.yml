@@ -1,0 +1,28 @@
+info:
+  name: return result task
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: 127.0.0.1:8089/api/v1/tasks/:id/result
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "id": "uuid",
+        "time_exec_ms": 50,
+        "result": "test_result"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,23 @@
+info:
+  name: edit agent description
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: 127.0.0.1:8089/api/v1/agents/:id/description
+  params:
+    - name: id
+      value: 01a16a2e-3cd6-78ca-82b0-514ff9784c6f
+      type: path
+  body:
+    type: json
+    data: '{"description": "test_description"}'
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

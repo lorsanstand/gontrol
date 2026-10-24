@@ -1,0 +1,24 @@
+info:
+  name: heartbeat
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: 127.0.0.1:8089/api/v1/heartbeat
+  body:
+    type: json
+    data: |-
+      {
+        "agent_id": "01a1686a-1fd1-71c2-a7e6-3af994049d1c",
+        "hostname": "test_hostname",
+        "os": "test_os"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

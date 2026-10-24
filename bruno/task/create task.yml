@@ -1,0 +1,26 @@
+info:
+  name: create task
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: 127.0.0.1:8089/api/v1/tasks
+  body:
+    type: json
+    data: |-
+      {
+        "agent_id": "uuid",
+        "command": "command",
+        "args": {
+          "args": "args"
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
