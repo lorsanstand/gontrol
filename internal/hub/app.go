@@ -11,6 +11,7 @@ import (
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
+	in_memory "github.com/lorsanstand/gontrol/internal/hub/store/in-memory"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/migrator"
 	"github.com/lorsanstand/gontrol/migrations"
@@ -49,8 +50,9 @@ func (a *App) Run() int {
 
 	agentRepo := postgres.NewAgentRepository(db)
 	taskRepo := postgres.NewTaskRepository(db)
+	agentStatusRepo := in_memory.NewAgentStateStore(TimeTTLOnlineAgent)
 
-	agentService := service.NewAgentService(a.logger, agentRepo)
+	agentService := service.NewAgentService(a.logger, agentRepo, agentStatusRepo)
 	taskService := service.NewTasksService(a.logger, taskRepo)
 	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 

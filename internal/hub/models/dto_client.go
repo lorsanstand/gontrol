@@ -49,6 +49,7 @@ type Agent struct {
 	OS          string    `json:"os"`
 	Hostname    string    `json:"hostname"`
 	Description *string   `json:"description"`
+	State       bool      `json:"state"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 

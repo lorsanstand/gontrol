@@ -21,20 +21,38 @@ type agentRepository interface {
 	EditNameByID(ctx context.Context, id uuid.UUID, name string) error
 }
 
+type agentStateRepository interface {
+	GetStatus(id uuid.UUID) bool
+}
+
 // AgentService структура для работы с агентами.
 type AgentService struct {
 	store agentRepository
+	state agentStateRepository
 	log   *slog.Logger
 }
 
-func NewAgentService(logger *slog.Logger, storage agentRepository) *AgentService {
-	return &AgentService{store: storage, log: logger}
+func NewAgentService(logger *slog.Logger, storage agentRepository, state agentStateRepository) *AgentService {
+	return &AgentService{store: storage, log: logger, state: state}
 }
 
 // GetAll возращает всех агентов в хранилище.
 // Если агентов нет возращает пустой список.
 func (a *AgentService) GetAll(ctx context.Context) ([]modelsHub.Agent, error) {
-	return a.store.GetAllAgents(ctx)
+	agentsDB, err := a.store.GetAllAgents(ctx)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+		return nil, fmt.Errorf("get agent: %w", err)
+	}
+
+	// В будущем попытаться оптимизировать
+	for _, agentDB := range agentsDB {
+		agentDB.State = a.state.GetStatus(agentDB.ID)
+	}
+
+	return agentsDB, nil
 }
 
 // Get возращает агента по его ID.
@@ -48,6 +66,8 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 		}
 		return nil, fmt.Errorf("get agent: %w", err)
 	}
+
+	agentDB.State = a.state.GetStatus(agentDB.ID)
 
 	return agentDB, nil
 }
