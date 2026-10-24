@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -11,6 +12,7 @@ import (
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
+	in_memory "github.com/lorsanstand/gontrol/internal/hub/store/in-memory"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/migrator"
 	"github.com/lorsanstand/gontrol/migrations"
@@ -33,6 +35,9 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() int {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	a.logger.Info("starting gontrol-hub...")
 
 	db, err := sql.Open("pgx", a.cfg.DatabaseURL())
@@ -50,7 +55,13 @@ func (a *App) Run() int {
 	agentRepo := postgres.NewAgentRepository(db)
 	taskRepo := postgres.NewTaskRepository(db)
 
-	agentService := service.NewAgentService(a.logger, agentRepo)
+	agentStateRepo := in_memory.NewAgentStateStore(TimeTTLOnlineAgent)
+	go func() {
+		err = agentStateRepo.AutoCleaner(ctx)
+		a.logger.Warn("auto cleaner state store stopped", slog.Any("error", err))
+	}()
+
+	agentService := service.NewAgentService(a.logger, agentRepo, agentStateRepo)
 	taskService := service.NewTasksService(a.logger, taskRepo)
 	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 

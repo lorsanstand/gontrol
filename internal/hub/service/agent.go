@@ -13,28 +13,35 @@ import (
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
-type agentRepository interface {
-	CreateAgent(ctx context.Context, agent modelsHub.Agent) (*modelsHub.Agent, error)
-	GetAgentByID(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error)
-	GetAllAgents(ctx context.Context) ([]modelsHub.Agent, error)
-	EditDescByID(ctx context.Context, id uuid.UUID, desc string) error
-	EditNameByID(ctx context.Context, id uuid.UUID, name string) error
-}
-
 // AgentService структура для работы с агентами.
 type AgentService struct {
 	store agentRepository
+	state agentStateRepository
 	log   *slog.Logger
 }
 
-func NewAgentService(logger *slog.Logger, storage agentRepository) *AgentService {
-	return &AgentService{store: storage, log: logger}
+func NewAgentService(logger *slog.Logger, storage agentRepository, state agentStateRepository) *AgentService {
+	return &AgentService{store: storage, log: logger, state: state}
 }
 
 // GetAll возращает всех агентов в хранилище.
 // Если агентов нет возращает пустой список.
 func (a *AgentService) GetAll(ctx context.Context) ([]modelsHub.Agent, error) {
-	return a.store.GetAllAgents(ctx)
+	agentsDB, err := a.store.GetAllAgents(ctx)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+		return nil, fmt.Errorf("get agent: %w", err)
+	}
+
+	// В будущем попытаться оптимизировать
+	for idx, agentDB := range agentsDB {
+		agentDB.State = a.state.GetStatus(agentDB.ID)
+		agentsDB[idx] = agentDB
+	}
+
+	return agentsDB, nil
 }
 
 // Get возращает агента по его ID.
@@ -48,6 +55,8 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 		}
 		return nil, fmt.Errorf("get agent: %w", err)
 	}
+
+	agentDB.State = a.state.GetStatus(agentDB.ID)
 
 	return agentDB, nil
 }
@@ -82,8 +91,8 @@ func (a *AgentService) EditNameAgent(ctx context.Context, id uuid.UUID, newName 
 	return nil
 }
 
-// EditDescAgent изменяет описание агента
-// Возращает ErrAgentNotFound если агент не найден
+// EditDescAgent изменяет описание агента.
+// Возращает ErrAgentNotFound если агент не найден.
 func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc string) error {
 	if err := a.store.EditDescByID(ctx, id, newDesc); err != nil {
 		if errors.Is(err, store.ErrChangeData) {
@@ -93,4 +102,10 @@ func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc 
 	}
 
 	return nil
+}
+
+// SetOnlineAgent меняет статус агента с offline на online.
+// Не проверяет существует ли агент.
+func (a *AgentService) SetOnlineAgent(id uuid.UUID) {
+	a.state.SetOnline(id)
 }

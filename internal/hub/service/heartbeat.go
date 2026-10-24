@@ -26,6 +26,8 @@ func (h *HeartbeatService) Handle(ctx context.Context, heartbeatReq models.Heart
 		return models.HeartbeatResponse{}, fmt.Errorf("register or update agent: %w", err)
 	}
 
+	h.agent.SetOnlineAgent(agent.ID)
+
 	task, err := h.task.Pop(ctx, agent.ID)
 	if err != nil && !errors.Is(err, ErrTaskNotFound) {
 		return models.HeartbeatResponse{}, fmt.Errorf("pop task: %w", err)
