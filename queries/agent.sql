@@ -20,4 +20,4 @@ UPDATE Agents
 
 -- name: EditNameAgentByID :execresult
     UPDATE Agents
-        SET description = $2 WHERE id=$1;
+        SET name = $2 WHERE id=$1;

@@ -111,7 +111,7 @@ func (a *AgentRepository) EditDescByID(ctx context.Context, id uuid.UUID, desc s
 // EditNameByID редактирует описание агента
 // Возращает ошибку store.ErrChangeData если ни одна строка не изменилась
 func (a *AgentRepository) EditNameByID(ctx context.Context, id uuid.UUID, name string) error {
-	query := gen.EditNameAgentByIDParams{ID: id, Description: &name}
+	query := gen.EditNameAgentByIDParams{ID: id, Name: name}
 
 	result, err := a.q.EditNameAgentByID(ctx, query)
 	if err != nil {

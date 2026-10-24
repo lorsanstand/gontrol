@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -26,11 +27,14 @@ func (h *HeartbeatService) Handle(ctx context.Context, heartbeatReq models.Heart
 	}
 
 	task, err := h.task.Pop(ctx, agent.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrTaskNotFound) {
 		return models.HeartbeatResponse{}, fmt.Errorf("pop task: %w", err)
 	}
+	var taskAgent *models.Task = nil
 
-	taskAgent := models.Task{ID: task.ID, Command: task.Command, Args: task.Args}
+	if task != nil {
+		taskAgent = &models.Task{ID: task.ID, Command: task.Command, Args: task.Args}
+	}
 
-	return models.HeartbeatResponse{AgentID: agent.ID, Task: &taskAgent}, nil
+	return models.HeartbeatResponse{AgentID: agent.ID, Task: taskAgent}, nil
 }

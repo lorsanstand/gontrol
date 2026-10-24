@@ -71,16 +71,16 @@ func (q *Queries) EditDescAgentByID(ctx context.Context, arg EditDescAgentByIDPa
 
 const editNameAgentByID = `-- name: EditNameAgentByID :execresult
     UPDATE Agents
-        SET description = $2 WHERE id=$1
+        SET name = $2 WHERE id=$1
 `
 
 type EditNameAgentByIDParams struct {
-	ID          uuid.UUID
-	Description *string
+	ID   uuid.UUID
+	Name string
 }
 
 func (q *Queries) EditNameAgentByID(ctx context.Context, arg EditNameAgentByIDParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, editNameAgentByID, arg.ID, arg.Description)
+	return q.db.ExecContext(ctx, editNameAgentByID, arg.ID, arg.Name)
 }
 
 const getAgentByID = `-- name: GetAgentByID :one

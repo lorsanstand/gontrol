@@ -14,7 +14,7 @@ import (
 
 const createTask = `-- name: CreateTask :one
 INSERT INTO Tasks (id, agent_id, status, command, args, exec_ms, result)
-    VALUES (id=$1, agent_id=$2, status=$3, command=$4, args=$5, exec_ms=$6, result=$7)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, agent_id, status, command, args, exec_ms, result, created_at
 `
 
