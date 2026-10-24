@@ -13,18 +13,6 @@ import (
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
-type agentRepository interface {
-	CreateAgent(ctx context.Context, agent modelsHub.Agent) (*modelsHub.Agent, error)
-	GetAgentByID(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error)
-	GetAllAgents(ctx context.Context) ([]modelsHub.Agent, error)
-	EditDescByID(ctx context.Context, id uuid.UUID, desc string) error
-	EditNameByID(ctx context.Context, id uuid.UUID, name string) error
-}
-
-type agentStateRepository interface {
-	GetStatus(id uuid.UUID) bool
-}
-
 // AgentService структура для работы с агентами.
 type AgentService struct {
 	store agentRepository
@@ -102,8 +90,8 @@ func (a *AgentService) EditNameAgent(ctx context.Context, id uuid.UUID, newName 
 	return nil
 }
 
-// EditDescAgent изменяет описание агента
-// Возращает ErrAgentNotFound если агент не найден
+// EditDescAgent изменяет описание агента.
+// Возращает ErrAgentNotFound если агент не найден.
 func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc string) error {
 	if err := a.store.EditDescByID(ctx, id, newDesc); err != nil {
 		if errors.Is(err, store.ErrChangeData) {
@@ -113,4 +101,10 @@ func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc 
 	}
 
 	return nil
+}
+
+// SetOnlineAgent меняет статус агента с offline на online.
+// Не проверяет существует ли агент.
+func (a *AgentService) SetOnlineAgent(id uuid.UUID) {
+	a.state.SetOnline(id)
 }
