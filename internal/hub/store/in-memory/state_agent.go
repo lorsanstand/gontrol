@@ -56,8 +56,6 @@ func (a *AgentStateStore) AutoCleaner(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
-
-	return nil
 }
 
 // CleanUp чистит агентов у которых истек ttl
