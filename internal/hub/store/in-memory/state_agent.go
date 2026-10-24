@@ -42,17 +42,19 @@ func (a *AgentStateStore) SetOnline(id uuid.UUID) {
 func (a *AgentStateStore) AutoCleaner(ctx context.Context) error {
 	ttl := a.ttl
 	if ttl <= 0 {
-		ttl = 1*time.Second
+		ttl = 1 * time.Second
 	}
 
 	ticker := time.NewTicker(ttl)
 	defer ticker.Stop()
 
-	select {
-	case <-ticker.C:
-		a.CleanUp()
-	case <-ctx.Done():
-		return ctx.Err()
+	for {
+		select {
+		case <-ticker.C:
+			a.CleanUp()
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 
 	return nil
