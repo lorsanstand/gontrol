@@ -36,8 +36,9 @@ func (a *AgentService) GetAll(ctx context.Context) ([]modelsHub.Agent, error) {
 	}
 
 	// В будущем попытаться оптимизировать
-	for _, agentDB := range agentsDB {
+	for idx, agentDB := range agentsDB {
 		agentDB.State = a.state.GetStatus(agentDB.ID)
+		agentsDB[idx] = agentDB
 	}
 
 	return agentsDB, nil
