@@ -21,6 +21,8 @@ func RegisterRoutes(
 	taskHandler := handler.NewTaskHandler(logger, task)
 	mux.HandleFunc("POST /api/v1/tasks", taskHandler.PostCreateTask)
 	mux.HandleFunc("POST /api/v1/tasks/{id}/result", taskHandler.PostResultTask)
+	mux.HandleFunc("GET /api/v1/tasks/{id}", taskHandler.GetTask)
+	mux.HandleFunc("GET /api/v1/tasks/agent/{id}", taskHandler.GetTaskByAgentID)
 
 	agentHandler := handler.NewAgentHandler(logger, agent)
 	mux.HandleFunc("GET /api/v1/agents/{id}", agentHandler.GetAgent)
