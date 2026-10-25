@@ -1,0 +1,23 @@
+info:
+  name: register agent
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: 127.0.0.1:8089/api/v1/agents/register
+  body:
+    type: json
+    data: |-
+      {
+        "hostname": "test_hostname",
+        "os": "test_os"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

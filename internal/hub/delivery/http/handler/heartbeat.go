@@ -34,7 +34,7 @@ func (h *HeartbeatHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	heartbeatResp, err := h.hb.Handle(ctx, heartbeatReq)
 	if err != nil {
-		ReturnErrors(w, "failed to save heartbeat", err)
+		ReturnErrors(w, "error processing heartbeat", err)
 		return
 	}
 
