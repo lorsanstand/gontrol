@@ -43,16 +43,6 @@ func TaskStatusParse(str string) (TaskStatus, error) {
 	}
 }
 
-type Agent struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	OS          string    `json:"os"`
-	Hostname    string    `json:"hostname"`
-	Description *string   `json:"description"`
-	State       bool      `json:"state"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
 type Task struct {
 	ID        uuid.UUID         `json:"id"`
 	AgentID   uuid.UUID         `json:"agent_id"`
