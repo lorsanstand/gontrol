@@ -78,6 +78,17 @@ func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.He
 	return agentDB, nil
 }
 
+func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
+	newAgent := modelsHub.Agent{Hostname: agentReq.Hostname, OS: agentReq.OS}
+
+	agentDB, err := a.store.CreateAgent(ctx, newAgent)
+	if err != nil {
+		return nil, fmt.Errorf("create agent: %w", err)
+	}
+
+	return agentDB, nil
+}
+
 // EditNameAgent изменяет имя агента.
 // Возращает ErrAgentNotFound если агент не найден.
 func (a *AgentService) EditNameAgent(ctx context.Context, id uuid.UUID, newName string) error {

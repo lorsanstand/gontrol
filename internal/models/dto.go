@@ -2,6 +2,11 @@ package models
 
 import "github.com/google/uuid"
 
+type CreateAgent struct {
+	OS       string `json:"OS"`
+	Hostname string `json:"hostname"`
+}
+
 type Task struct {
 	ID      uuid.UUID         `json:"id"`
 	Command string            `json:"command"`
