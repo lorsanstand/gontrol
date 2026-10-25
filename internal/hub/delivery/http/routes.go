@@ -27,4 +27,5 @@ func RegisterRoutes(
 	mux.HandleFunc("GET /api/v1/agents/", agentHandler.GetAllAgents)
 	mux.HandleFunc("PATCH /api/v1/agents/{id}/name", agentHandler.EditName)
 	mux.HandleFunc("PATCH /api/v1/agents/{id}/description", agentHandler.EditDesc)
+	mux.HandleFunc("POST /api/v1/agents/register", agentHandler.RegisterAgent)
 }

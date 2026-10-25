@@ -7,6 +7,12 @@ type CreateAgent struct {
 	Hostname string `json:"hostname"`
 }
 
+type Agent struct {
+	ID       uuid.UUID `json:"id"`
+	OS       string    `json:"OS"`
+	Hostname string    `json:"hostname"`
+}
+
 type Task struct {
 	ID      uuid.UUID         `json:"id"`
 	Command string            `json:"command"`
