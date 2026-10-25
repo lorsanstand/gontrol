@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "agent_id": "01a1686a-1fd1-71c2-a7e6-3af994049d1c",
+        "agent_id": "01a17214-ba67-71ff-9b07-c06ef6f00ea1",
         "hostname": "test_hostname",
         "os": "test_os"
       }
