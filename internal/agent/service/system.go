@@ -34,3 +34,7 @@ func (s *SystemService) SaveAgentID(AgentID uuid.UUID) error {
 	s.cfg.AgentID = &AgentID
 	return s.cfg.Save()
 }
+
+func (s *SystemService) GetAgentID() *uuid.UUID {
+	return s.cfg.AgentID
+}

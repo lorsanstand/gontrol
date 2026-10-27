@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	"runtime"
 	"time"
 
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -15,58 +13,52 @@ type AgentRunner struct {
 	log      *slog.Logger
 	taskExec *TaskExecutor
 	hub      *HubClient
-	system *SystemService
+	system   *SystemService
 }
 
 func NewAgentRunner(log *slog.Logger, tasker *TaskExecutor, hub *HubClient, system *SystemService) *AgentRunner {
 	return &AgentRunner{log: log, taskExec: tasker, hub: hub, system: system}
 }
 
-func (a *AgentRunner) Serve() error {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return fmt.Errorf("get hostname: %w", err)
+func (a *AgentRunner) Serve(ctx context.Context) error {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	agentID := a.system.GetAgentID()
+	if agentID == nil {
+		agent, err := a.RegisterAgent(ctx)
+		if err != nil {
+			return err
+		}
+
+		agentID = &agent.ID
 	}
-	OS := runtime.GOOS
-	hb := models.HeartbeatRequest{AgentID: nil, Hostname: hostname, OS: OS}
 
-	for {
-		time.Sleep(5 * time.Second)
+	hb := models.HeartbeatRequest{AgentID: *agentID}
 
-		a.log.Debug("send heartbeat")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-		resp, err := a.hub.SendHeartbeat(ctx, hb)
-		if err != nil {
-			a.log.Warn("send heartbeat to hub", slog.Any("error", err))
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		if hb.AgentID == nil {
-			slog.Info("new agent id", slog.Any("agent id", resp.AgentID))
-			hb.AgentID = &resp.AgentID
-		}
-
-		if resp.Task == nil {
-			a.log.Debug("no tasks, continue")
-			continue
-		}
-
-		result, err := a.taskExec.Execute(ctx, *resp.Task)
-		if err != nil {
-			a.log.Warn("error execute task", slog.Any("error", err))
-			continue
-		}
-
-		err = a.hub.SendTaskResult(ctx, resp.Task.ID, result)
-		if err != nil {
-			a.log.Warn("send result task to hub", slog.Any("error", err))
-			continue
-		}
-
-		cancel()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-ticker.C:
+		a.hub.SendHeartbeat(ctx)
 	}
 }
 
-func (h *HubClient)
+// RegisterAgent регистрирует агента и сохраняет AgentID.
+func (a *AgentRunner) RegisterAgent(ctx context.Context) (*models.Agent, error) {
+	specs, err := a.system.GetSpecs()
+	if err != nil {
+		return nil, fmt.Errorf("get specification: %w", err)
+	}
+
+	agent, err := a.hub.RegisterAgent(ctx, *specs)
+	if err != nil {
+		return nil, fmt.Errorf("register agent in hub: %w", err)
+	}
+
+	if err = a.system.SaveAgentID(agent.ID); err != nil {
+		return nil, fmt.Errorf("save agent ID: %w", err)
+	}
+
+	return agent, nil
+}
