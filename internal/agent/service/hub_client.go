@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+	modelsAgent "github.com/lorsanstand/gontrol/internal/agent/models"
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
@@ -21,6 +22,8 @@ func NewHubClient(address url.URL, client *http.Client) *HubClient {
 	return &HubClient{client: client, addr: address}
 }
 
+// SendHeartbeat отправялет хабу heartbeat.
+// Если статус код не равен 201 возращает ошибку.
 func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.HeartbeatRequest) (models.HeartbeatResponse, error) {
 	jsonData, err := json.Marshal(heartbeat)
 	if err != nil {
@@ -57,6 +60,8 @@ func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.Heartbea
 	return result, nil
 }
 
+// SendTaskResult отправляет хабу результат задачи.
+// Если статус код не равен 201 возращает ошибку.
 func (h *HubClient) SendTaskResult(ctx context.Context, id uuid.UUID, taskResult models.TaskResult) error {
 	jsonData, err := json.Marshal(taskResult)
 	if err != nil {
@@ -86,4 +91,43 @@ func (h *HubClient) SendTaskResult(ctx context.Context, id uuid.UUID, taskResult
 	}
 
 	return nil
+}
+
+// RegisterAgent регистрирует агента.
+// Если статус код не равен 201 возращает ошибку.
+func (h *HubClient) RegisterAgent(ctx context.Context, specs modelsAgent.Specs) (*models.Agent, error) {
+	jsonData, err := json.Marshal(specs)
+	if err != nil {
+		return nil, fmt.Errorf("marshal specification: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		h.addr.JoinPath("agents", "register").String(),
+		bytes.NewReader(jsonData),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create register agent request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := h.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("send create agent request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var agent models.Agent
+
+	if err = json.NewDecoder(resp.Body).Decode(&agent); err != nil {
+		return nil, fmt.Errorf("unmarshal agent: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("unexpected status code: %v", resp.StatusCode)
+	}
+
+	return &agent, nil
 }

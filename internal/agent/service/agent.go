@@ -15,10 +15,11 @@ type AgentRunner struct {
 	log      *slog.Logger
 	taskExec *TaskExecutor
 	hub      *HubClient
+	system *SystemService
 }
 
-func NewAgentRunner(log *slog.Logger, tasker *TaskExecutor, hub *HubClient) *AgentRunner {
-	return &AgentRunner{log: log, taskExec: tasker, hub: hub}
+func NewAgentRunner(log *slog.Logger, tasker *TaskExecutor, hub *HubClient, system *SystemService) *AgentRunner {
+	return &AgentRunner{log: log, taskExec: tasker, hub: hub, system: system}
 }
 
 func (a *AgentRunner) Serve() error {
@@ -67,3 +68,5 @@ func (a *AgentRunner) Serve() error {
 		cancel()
 	}
 }
+
+func (h *HubClient)
