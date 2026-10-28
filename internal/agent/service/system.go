@@ -10,14 +10,14 @@ import (
 	modelsAgent "github.com/lorsanstand/gontrol/internal/agent/models"
 )
 
-type SystemService struct {
+type System struct {
 	specs modelsAgent.Specs
-	cfg *config.Config
+	cfg   *config.Config
 }
 
-// Init Иницилизрует SystemService.
+// Init Иницилизрует System.
 // При создании берет данные о системе.
-func Init(cfg *config.Config) (*SystemService, error) {
+func Init(cfg *config.Config) (*System, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, fmt.Errorf("get hostname: %w", err)
@@ -26,22 +26,22 @@ func Init(cfg *config.Config) (*SystemService, error) {
 
 	specs := modelsAgent.Specs{OS: OS, Hostname: hostname}
 
-	return &SystemService{cfg: cfg, specs: specs}, nil
+	return &System{cfg: cfg, specs: specs}, nil
 }
 
 // GetSpecs Возращает системные характеристики устройства.
 // Если не удалось их получить возращает ошибку.
-func (s *SystemService) GetSpecs() modelsAgent.Specs {
+func (s *System) GetSpecs() modelsAgent.Specs {
 	return s.specs
 }
 
 // SaveAgentID сохраняет ID агента в файле конфига.
-func (s *SystemService) SaveAgentID(AgentID uuid.UUID) error {
+func (s *System) SaveAgentID(AgentID uuid.UUID) error {
 	s.cfg.AgentID = &AgentID
 	return s.cfg.Save()
 }
 
 // GetAgentID возращает ID агента.
-func (s *SystemService) GetAgentID() *uuid.UUID {
+func (s *System) GetAgentID() *uuid.UUID {
 	return s.cfg.AgentID
 }
