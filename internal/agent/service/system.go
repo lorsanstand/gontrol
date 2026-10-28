@@ -11,30 +11,37 @@ import (
 )
 
 type SystemService struct {
+	specs modelsAgent.Specs
 	cfg *config.Config
 }
 
-func NewSystemService(cfg *config.Config) *SystemService {
-	return &SystemService{cfg: cfg}
-}
-
-// GetSpecs Возращает системные характеристики устройства.
-// Если не удалось их получить возращает ошибку.
-func (s *SystemService) GetSpecs() (*modelsAgent.Specs, error) {
+// Init Иницилизрует SystemService.
+// При создании берет данные о системе.
+func Init(cfg *config.Config) (*SystemService, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, fmt.Errorf("get hostname: %w", err)
 	}
 	OS := runtime.GOOS
 
-	return &modelsAgent.Specs{OS: OS, Hostname: hostname}, nil
+	specs := modelsAgent.Specs{OS: OS, Hostname: hostname}
+
+	return &SystemService{cfg: cfg, specs: specs}, nil
 }
 
+// GetSpecs Возращает системные характеристики устройства.
+// Если не удалось их получить возращает ошибку.
+func (s *SystemService) GetSpecs() modelsAgent.Specs {
+	return s.specs
+}
+
+// SaveAgentID сохраняет ID агента в файле конфига.
 func (s *SystemService) SaveAgentID(AgentID uuid.UUID) error {
 	s.cfg.AgentID = &AgentID
 	return s.cfg.Save()
 }
 
+// GetAgentID возращает ID агента.
 func (s *SystemService) GetAgentID() *uuid.UUID {
 	return s.cfg.AgentID
 }
