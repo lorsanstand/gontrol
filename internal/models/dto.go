@@ -2,6 +2,17 @@ package models
 
 import "github.com/google/uuid"
 
+type CreateAgent struct {
+	OS       string `json:"OS"`
+	Hostname string `json:"hostname"`
+}
+
+type Agent struct {
+	ID       uuid.UUID `json:"id"`
+	OS       string    `json:"OS"`
+	Hostname string    `json:"hostname"`
+}
+
 type Task struct {
 	ID      uuid.UUID         `json:"id"`
 	Command string            `json:"command"`
@@ -15,9 +26,9 @@ type TaskResult struct {
 }
 
 type HeartbeatRequest struct {
-	AgentID  *uuid.UUID `json:"agent_id"`
-	Hostname string     `json:"hostname"`
-	OS       string     `json:"os"`
+	AgentID  uuid.UUID `json:"agent_id"`
+	Hostname string    `json:"hostname"`
+	OS       string    `json:"os"`
 }
 
 type HeartbeatResponse struct {

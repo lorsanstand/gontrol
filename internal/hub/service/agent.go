@@ -61,14 +61,8 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 	return agentDB, nil
 }
 
-// RegisterOrUpdate регистрирует агента если передан пустой AgentID, и обновляет данные если агент уже зарегистрирован.
-func (a *AgentService) RegisterOrUpdate(ctx context.Context, heartbeat models.HeartbeatRequest) (*modelsHub.Agent, error) {
-	if heartbeat.AgentID != nil {
-		a.log.Debug("agent exists", slog.Any("agentID", heartbeat.AgentID))
-		return a.Get(ctx, *heartbeat.AgentID)
-	}
-
-	newAgent := modelsHub.Agent{Hostname: heartbeat.Hostname, OS: heartbeat.OS}
+func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
+	newAgent := modelsHub.Agent{Hostname: agentReq.Hostname, OS: agentReq.OS}
 
 	agentDB, err := a.store.CreateAgent(ctx, newAgent)
 	if err != nil {

@@ -18,25 +18,26 @@ func NewHeartbeatService(agent *AgentService, task *TaskService) *HeartbeatServi
 	return &HeartbeatService{agent: agent, task: task}
 }
 
-// Handle обновляет или регистрирует агента, и отдает ему задачу.
-// Если агент не удалось обновить или выдать задачу, возвращается ошибка
-func (h *HeartbeatService) Handle(ctx context.Context, heartbeatReq models.HeartbeatRequest) (models.HeartbeatResponse, error) {
-	agent, err := h.agent.RegisterOrUpdate(ctx, heartbeatReq)
+// Handle обновляет статус агента и возращает ID и задачу для выполнения.
+// Если не удалось проверить существует ли агент возращается ErrAgentNotFound.
+// Если задача нет то возращается nil в поле Tasks
+func (h *HeartbeatService) Handle(ctx context.Context, heartbeatReq models.HeartbeatRequest) (*models.HeartbeatResponse, error) {
+	agent, err := h.agent.Get(ctx, heartbeatReq.AgentID)
 	if err != nil {
-		return models.HeartbeatResponse{}, fmt.Errorf("register or update agent: %w", err)
+		return nil, err
 	}
 
 	h.agent.SetOnlineAgent(agent.ID)
 
 	task, err := h.task.Pop(ctx, agent.ID)
 	if err != nil && !errors.Is(err, ErrTaskNotFound) {
-		return models.HeartbeatResponse{}, fmt.Errorf("pop task: %w", err)
+		return nil, fmt.Errorf("pop task: %w", err)
 	}
-	var taskAgent *models.Task = nil
 
+	var taskAgent *models.Task = nil
 	if task != nil {
 		taskAgent = &models.Task{ID: task.ID, Command: task.Command, Args: task.Args}
 	}
 
-	return models.HeartbeatResponse{AgentID: agent.ID, Task: taskAgent}, nil
+	return &models.HeartbeatResponse{AgentID: agent.ID, Task: taskAgent}, nil
 }

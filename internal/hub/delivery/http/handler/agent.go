@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
+	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
@@ -128,4 +129,26 @@ func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (a *AgentHandler) RegisterAgent(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var createAgent models.CreateAgent
+
+	err := json.NewDecoder(r.Body).Decode(&createAgent)
+	if err != nil {
+		a.log.Debug("invalid json", slog.Any("error", err))
+		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	agent, err := a.agent.Register(ctx, createAgent)
+	if err != nil {
+		ReturnErrors(w, "error create agent", err)
+		return
+	}
+
+	newAgent := models.Agent{ID: agent.ID, Hostname: agent.Hostname, OS: agent.OS}
+
+	utils.WriteJSON(w, newAgent, http.StatusCreated)
 }

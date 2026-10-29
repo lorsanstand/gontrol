@@ -85,3 +85,28 @@ func (t *TaskService) SaveResult(ctx context.Context, id uuid.UUID, result strin
 
 	return nil
 }
+
+// GetByID отдает задачу по id.
+// Если задача не найдена возращается ErrTaskNotFound.
+func (t *TaskService) GetByID(ctx context.Context, id uuid.UUID) (*modelsHub.Task, error) {
+	taskDB, err := t.store.GetTaskByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrTaskNotFound
+		}
+		return nil, fmt.Errorf("get task: %w", err)
+	}
+
+	return taskDB, nil
+}
+
+// GetByAgentID отдает задачи по id агента.
+// Если задача не найдена возращается пустой слайс.
+func (t *TaskService) GetByAgentID(ctx context.Context, id uuid.UUID) ([]modelsHub.Task, error) {
+	taskDB, err := t.store.GetTasksByAgentID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get tasks: %w", err)
+	}
+
+	return taskDB, nil
+}
