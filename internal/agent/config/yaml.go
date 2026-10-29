@@ -49,7 +49,7 @@ func (c *Config) Save() error {
 		return err
 	}
 
-	err = os.WriteFile("config.yaml", data, 0644)
+	err = os.WriteFile("config.yaml", data, 0600)
 	if err != nil {
 		return err
 	}
