@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -46,7 +47,12 @@ func (a *App) Run() int {
 		},
 	}
 
-	hub := service.NewHubClient(*a.cfg.HubURL, client)
+	hubURL, err := url.Parse(*a.cfg.HubURL)
+	if err != nil {
+		slog.Error("invalid hub URL", slog.Any("error", err))
+	}
+
+	hub := service.NewHubClient(*hubURL, client)
 	task := &service.TaskExecutor{}
 	system, err := service.SystemInit(a.cfg)
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"os"
 
 	"github.com/google/uuid"
@@ -14,12 +13,12 @@ import (
 var ErrCreateFile = errors.New("create new config.yaml")
 
 type Config struct {
-	HubURL   *url.URL   `yaml:"hub-url"`
+	HubURL   *string    `yaml:"hub-url"`
 	LogLevel slog.Level `yaml:"log-level"`
 	AgentID  *uuid.UUID `yaml:"agent-id"`
 }
 
-// LoadConfig читает конфиг с с файла config.yaml.
+// Load читает конфиг с с файла config.yaml.
 // Если файла нет он будет создан и будет возращена ошибка ErrCreateFile.
 func Load() (*Config, error) {
 	data, err := os.ReadFile("config.yaml")
