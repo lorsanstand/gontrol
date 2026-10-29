@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -33,6 +34,8 @@ func NewApp() (*App, error) {
 
 func (a *App) Run() int {
 	a.logger.Info("starting gontrol-agent...")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -45,9 +48,15 @@ func (a *App) Run() int {
 
 	hub := service.NewHubClient(*a.cfg.HubURL, client)
 	task := &service.TaskExecutor{}
-	agent := service.NewAgentRunner(a.logger, task, hub)
+	system, err := service.SystemInit(a.cfg)
+	if err != nil {
+		a.logger.Error("error system init", slog.Any("error", err))
+		return 1
+	}
 
-	err := agent.Serve()
+	agent := service.NewAgentRunner(a.logger, task, hub, system)
+
+	err = agent.Serve(ctx)
 	a.logger.Error("stop agent serve", slog.Any("error", err))
 
 	return 0

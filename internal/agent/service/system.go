@@ -17,7 +17,7 @@ type System struct {
 
 // Init Иницилизрует System.
 // При создании берет данные о системе.
-func Init(cfg *config.Config) (*System, error) {
+func SystemInit(cfg *config.Config) (*System, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, fmt.Errorf("get hostname: %w", err)
