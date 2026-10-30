@@ -69,8 +69,7 @@ func (a *App) Run() int {
 
 	r := chi.NewRouter()
 
-
-	middlewares.ConnectMiddlewares(r)
+	middlewares.ConnectMiddlewares(r, a.logger)
 	apiRouter := deliveryHttp.RegisterRoutes(a.logger, taskService, agentService, heartbeatService)
 
 	r.Mount("/api/v1", apiRouter)
