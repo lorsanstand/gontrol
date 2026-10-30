@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
+	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/middlewares"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	in_memory "github.com/lorsanstand/gontrol/internal/hub/store/in-memory"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
@@ -68,6 +69,8 @@ func (a *App) Run() int {
 
 	r := chi.NewRouter()
 
+
+	middlewares.ConnectMiddlewares(r)
 	apiRouter := deliveryHttp.RegisterRoutes(a.logger, taskService, agentService, heartbeatService)
 
 	r.Mount("/api/v1", apiRouter)
