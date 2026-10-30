@@ -2,32 +2,40 @@ package http
 
 import (
 	"log/slog"
-	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/handler"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 )
 
 func RegisterRoutes(
-	mux *http.ServeMux,
 	logger *slog.Logger,
 	task *service.TaskService,
 	agent *service.AgentService,
 	heartbeat *service.HeartbeatService,
-) {
+) *chi.Mux {
+	mux := chi.NewRouter()
+
 	heartbeatHandler := handler.NewHeartbeatHandler(logger, heartbeat)
-	mux.Handle("POST /api/v1/heartbeat", heartbeatHandler)
+	mux.Post("/heartbeat", heartbeatHandler.ServeHTTP)
 
+	taskRouter := chi.NewRouter()
 	taskHandler := handler.NewTaskHandler(logger, task)
-	mux.HandleFunc("POST /api/v1/tasks", taskHandler.PostCreateTask)
-	mux.HandleFunc("POST /api/v1/tasks/{id}/result", taskHandler.PostResultTask)
-	mux.HandleFunc("GET /api/v1/tasks/{id}", taskHandler.GetTask)
-	mux.HandleFunc("GET /api/v1/tasks/agent/{id}", taskHandler.GetTaskByAgentID)
+	taskRouter.Post("/", taskHandler.PostCreateTask)
+	taskRouter.Post("/{id}/result", taskHandler.PostResultTask)
+	taskRouter.Get("/{id}", taskHandler.GetTask)
+	taskRouter.Get("/agent/{id}", taskHandler.GetTaskByAgentID)
 
+	agentRouter := chi.NewRouter()
 	agentHandler := handler.NewAgentHandler(logger, agent)
-	mux.HandleFunc("GET /api/v1/agents/{id}", agentHandler.GetAgent)
-	mux.HandleFunc("GET /api/v1/agents/", agentHandler.GetAllAgents)
-	mux.HandleFunc("PATCH /api/v1/agents/{id}/name", agentHandler.EditName)
-	mux.HandleFunc("PATCH /api/v1/agents/{id}/description", agentHandler.EditDesc)
-	mux.HandleFunc("POST /api/v1/agents/register", agentHandler.RegisterAgent)
+	agentRouter.Get("/{id}", agentHandler.GetAgent)
+	agentRouter.Get("/", agentHandler.GetAllAgents)
+	agentRouter.Patch("/{id}/name", agentHandler.EditName)
+	agentRouter.Patch("/{id}/description", agentHandler.EditDesc)
+	agentRouter.Post("/register", agentHandler.RegisterAgent)
+
+	mux.Mount("/tasks", taskRouter)
+	mux.Mount("/agents", agentRouter)
+
+	return mux
 }
