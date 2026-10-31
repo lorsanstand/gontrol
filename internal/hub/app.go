@@ -9,8 +9,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
+	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/middlewares"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	in_memory "github.com/lorsanstand/gontrol/internal/hub/store/in-memory"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
@@ -65,13 +67,16 @@ func (a *App) Run() int {
 	taskService := service.NewTasksService(a.logger, taskRepo)
 	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	deliveryHttp.RegisterRoutes(mux, a.logger, taskService, agentService, heartbeatService)
+	middlewares.ConnectMiddlewares(r, a.logger)
+	apiRouter := deliveryHttp.RegisterRoutes(a.logger, taskService, agentService, heartbeatService)
+
+	r.Mount("/api/v1", apiRouter)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", a.cfg.Port),
-		Handler:      mux,
+		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
