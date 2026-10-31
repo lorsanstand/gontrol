@@ -13,6 +13,8 @@ import (
 	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
 )
 
+//go:generate mockgen -destination=mocks/mock_querier.go -package=mocks  ./gen Querier
+
 type AgentRepository struct {
 	db *sql.DB
 	q  gen.Querier
@@ -22,7 +24,7 @@ func NewAgentRepository(db *sql.DB) *AgentRepository {
 	return &AgentRepository{db: db, q: gen.New(db)}
 }
 
-// CreateAgent создает агента в БД. передается агент без ID и даты создания возращается готовый агент из БД.
+// CreateAgent создает агента в БД. передается агент без ID и даты создания возвращается готовый агент из БД.
 func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent) (*modelsHub.Agent, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -52,7 +54,7 @@ func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent
 }
 
 // GetAgentByID возращает агента по ID.
-// Если агента нет то возращает store.ErrNotFound
+// Если агента нет возращает store.ErrNotFound
 func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error) {
 	agentDB, err := a.q.GetAgentByID(ctx, id)
 	if err != nil {
@@ -64,11 +66,12 @@ func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*mode
 	}
 
 	return &modelsHub.Agent{
-		ID:        agentDB.ID,
-		Name:      agentDB.Name,
-		OS:        agentDB.Os,
-		Hostname:  agentDB.Hostname,
-		CreatedAt: agentDB.CreatedAt,
+		ID:          agentDB.ID,
+		Name:        agentDB.Name,
+		OS:          agentDB.Os,
+		Hostname:    agentDB.Hostname,
+		Description: agentDB.Description,
+		CreatedAt:   agentDB.CreatedAt,
 	}, nil
 }
 
