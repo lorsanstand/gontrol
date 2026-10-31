@@ -40,13 +40,7 @@ func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent
 		return nil, fmt.Errorf("insert agent into db: %w", err)
 	}
 
-	return &modelsHub.Agent{
-		ID:        agentDB.ID,
-		Name:      agentDB.Name,
-		OS:        agentDB.Os,
-		Hostname:  agentDB.Hostname,
-		CreatedAt: agentDB.CreatedAt,
-	}, nil
+	return toAgent(agentDB)
 }
 
 // GetAgentByID возращает агента по ID.
@@ -61,14 +55,7 @@ func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*mode
 		return nil, fmt.Errorf("select agent into db: %w", err)
 	}
 
-	return &modelsHub.Agent{
-		ID:          agentDB.ID,
-		Name:        agentDB.Name,
-		OS:          agentDB.Os,
-		Hostname:    agentDB.Hostname,
-		Description: agentDB.Description,
-		CreatedAt:   agentDB.CreatedAt,
-	}, nil
+	return toAgent(agentDB)
 }
 
 // GetAllAgents возращает всех агентов.
@@ -81,15 +68,12 @@ func (a *AgentRepository) GetAllAgents(ctx context.Context) ([]modelsHub.Agent, 
 
 	agents := make([]modelsHub.Agent, 0, len(agentsDB))
 	for _, agentDB := range agentsDB {
-		agent := modelsHub.Agent{
-			ID:        agentDB.ID,
-			Name:      agentDB.Name,
-			OS:        agentDB.Os,
-			Hostname:  agentDB.Hostname,
-			CreatedAt: agentDB.CreatedAt,
+		agent, err := toAgent(agentDB)
+		if err != nil {
+			return nil, err
 		}
 
-		agents = append(agents, agent)
+		agents = append(agents, *agent)
 	}
 
 	return agents, nil

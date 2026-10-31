@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
-	postgres "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
+	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
 )
 
-func toTask(taskDB postgres.Task) (*modelsHub.Task, error) {
+func toTask(taskDB gen.Task) (*modelsHub.Task, error) {
 	argsDB := new(map[string]string)
 	status, err := modelsHub.TaskStatusParse(taskDB.Status)
 	if err != nil {
@@ -29,5 +29,16 @@ func toTask(taskDB postgres.Task) (*modelsHub.Task, error) {
 		ExecMs:    taskDB.ExecMs,
 		Result:    taskDB.Result,
 		CreatedAt: taskDB.CreatedAt,
+	}, nil
+}
+
+func toAgent(agentDB gen.Agent) (*modelsHub.Agent, error) {
+	return &modelsHub.Agent{
+		ID:          agentDB.ID,
+		Name:        agentDB.Name,
+		OS:          agentDB.Os,
+		Hostname:    agentDB.Hostname,
+		Description: agentDB.Description,
+		CreatedAt:   agentDB.CreatedAt,
 	}, nil
 }
