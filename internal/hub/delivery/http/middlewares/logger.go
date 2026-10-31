@@ -11,10 +11,12 @@ import (
 
 var log *slog.Logger
 
+// initLogger добавляет свой логгер в middleware.
 func initLogger(loggerSystem *slog.Logger) {
 	log = loggerSystem
 }
 
+// Logger логирует http запросы.
 func Logger(next http.Handler) http.Handler {
 	return middleware.RequestLogger(&logger{})(next)
 }
@@ -42,6 +44,7 @@ func (l *logger) Write(status, bytes int, header http.Header, elapsed time.Durat
 		slog.Int("status", status),
 		slog.String("address", l.r.RemoteAddr),
 		slog.String("timeExec", elapsed.String()),
+		slog.Int("size", bytes),
 	)
 }
 
