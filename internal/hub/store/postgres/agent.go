@@ -24,15 +24,11 @@ func NewAgentRepository(db *sql.DB) *AgentRepository {
 	return &AgentRepository{db: db, q: gen.New(db)}
 }
 
-// CreateAgent создает агента в БД. передается агент без ID и даты создания возвращается готовый агент из БД.
+// CreateAgent создает агента в БД. передается агент без даты создания возвращается готовый агент из БД.
 func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent) (*modelsHub.Agent, error) {
-	id, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("generate id: %w", err)
-	}
 
 	agentCreate := gen.CreateAgentParams{
-		ID:          id,
+		ID:          agent.ID,
 		Name:        agent.Name,
 		Os:          agent.OS,
 		Hostname:    agent.Hostname,
@@ -75,7 +71,8 @@ func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*mode
 	}, nil
 }
 
-// GetAllAgents возращает всех агентов
+// GetAllAgents возращает всех агентов.
+// Если агентов нет возращает пустой слайс.
 func (a *AgentRepository) GetAllAgents(ctx context.Context) ([]modelsHub.Agent, error) {
 	agentsDB, err := a.q.GetAllAgents(ctx)
 	if err != nil {

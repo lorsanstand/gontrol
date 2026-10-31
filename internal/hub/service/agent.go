@@ -62,7 +62,11 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 }
 
 func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
-	newAgent := modelsHub.Agent{Hostname: agentReq.Hostname, OS: agentReq.OS}
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("generate id: %w", err)
+	}
+	newAgent := modelsHub.Agent{ID: id, Hostname: agentReq.Hostname, OS: agentReq.OS}
 
 	agentDB, err := a.store.CreateAgent(ctx, newAgent)
 	if err != nil {
