@@ -22,4 +22,5 @@ create-migrate:
 	migrate create -ext sql -dir ./migrations -seq $(NAME)
 
 gen:
+	sqlc generate
 	go generate ./...
