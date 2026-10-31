@@ -1,4 +1,4 @@
-.PHONY: build run-hub run-agent lint test create-migrate
+.PHONY: build run-hub run-agent lint test create-migrate, gen
 
 NAME ?= default_migration
 
@@ -20,3 +20,6 @@ test:
 
 create-migrate:
 	migrate create -ext sql -dir ./migrations -seq $(NAME)
+
+gen:
+	go generate ./...
