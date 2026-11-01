@@ -11,15 +11,6 @@ import (
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 )
 
-type tasksRepository interface {
-	CreateTask(ctx context.Context, task modelsHub.Task) (*modelsHub.Task, error)
-	GetTaskByID(ctx context.Context, id uuid.UUID) (*modelsHub.Task, error)
-	GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]modelsHub.Task, error)
-	NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error)
-	EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error
-	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
-}
-
 // TaskService структура для работы с задачами для агента.
 type TaskService struct {
 	log   *slog.Logger
