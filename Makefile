@@ -20,7 +20,8 @@ test:
 
 cover:
 	go test -short -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+	firefox coverage.html
 	rm coverage.out
 
 create-migrate:
