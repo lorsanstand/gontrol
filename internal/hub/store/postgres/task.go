@@ -23,19 +23,15 @@ func NewTaskRepository(db *sql.DB) *TaskRepository {
 }
 
 // CreateTask создает новую задачу для определенного агента.
+// Передается все поля models.Task кроме createdAt.
 func (t *TaskRepository) CreateTask(ctx context.Context, task modelsHub.Task) (*modelsHub.Task, error) {
-	id, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("generate id: %w", err)
-	}
-
 	args, err := json.Marshal(task.Args)
 	if err != nil {
 		return nil, fmt.Errorf("marshal args: %w", err)
 	}
 
 	taskCreate := gen.CreateTaskParams{
-		ID:      id,
+		ID:      task.ID,
 		AgentID: task.AgentID,
 		Status:  string(task.Status),
 		Command: task.Command,
@@ -68,6 +64,7 @@ func (t *TaskRepository) GetTaskByID(ctx context.Context, id uuid.UUID) (*models
 }
 
 // GetTasksByAgentID возращает задачи по id агента.
+// Возвращает пустой слайс если задач нет.
 func (t *TaskRepository) GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]modelsHub.Task, error) {
 	tasksDB, err := t.q.GetTasksByAgentID(ctx, agentID)
 	if err != nil {
@@ -89,7 +86,7 @@ func (t *TaskRepository) GetTasksByAgentID(ctx context.Context, agentID uuid.UUI
 }
 
 // NextTaskByAgentID возращает следующую задачу в статусе pending по id агента.
-// Если задач нет то возращает store.ErrNotFound.
+// Если задач нет возращает store.ErrNotFound.
 func (t *TaskRepository) NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error) {
 	taskDB, err := t.q.NextTaskByAgentID(ctx, agentID)
 	if err != nil {

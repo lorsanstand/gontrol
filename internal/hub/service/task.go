@@ -33,8 +33,13 @@ func NewTasksService(logger *slog.Logger, storage tasksRepository) *TaskService 
 // Метод Add создает задачу и назначает ее указанному агенту.
 // Если задачу невозможно сохранить или агент не существует, возвращается ошибка.
 func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) (*modelsHub.Task, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("generate id: %w", err)
+	}
 
 	task := modelsHub.Task{
+		ID:      id,
 		AgentID: taskCreate.AgentID,
 		Status:  modelsHub.TaskStatusPending,
 		Command: taskCreate.Command,
