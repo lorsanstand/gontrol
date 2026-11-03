@@ -13,10 +13,10 @@ import (
 var ErrCreateFile = errors.New("create new config.yaml")
 
 type Config struct {
-	HubURL   *string    `yaml:"hub-url"`
-	LogLevel slog.Level `yaml:"log-level"`
-	LogFormat string `yaml:"log-format"`
-	AgentID  *uuid.UUID `yaml:"agent-id"`
+	HubURL    *string    `yaml:"hub-url"`
+	LogLevel  slog.Level `yaml:"log-level"`
+	LogFormat string     `yaml:"log-format"`
+	AgentID   *uuid.UUID `yaml:"agent-id"`
 }
 
 // Load читает конфиг с с файла config.yaml.
