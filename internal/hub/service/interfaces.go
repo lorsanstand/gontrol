@@ -31,3 +31,5 @@ type tasksRepository interface {
 	EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error
 	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
 }
+
+type generatorID func() (uuid.UUID, error)

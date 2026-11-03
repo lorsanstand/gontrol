@@ -17,6 +17,7 @@ import (
 type AgentService struct {
 	store agentRepository
 	state agentStateRepository
+	genID generatorID
 	log   *slog.Logger
 }
 
@@ -62,7 +63,7 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 }
 
 func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
-	id, err := uuid.NewV7()
+	id, err := a.genID()
 	if err != nil {
 		return nil, fmt.Errorf("generate id: %w", err)
 	}
