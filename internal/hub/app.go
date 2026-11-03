@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -17,6 +16,7 @@ import (
 	in_memory "github.com/lorsanstand/gontrol/internal/hub/store/in-memory"
 	"github.com/lorsanstand/gontrol/internal/hub/store/postgres"
 	"github.com/lorsanstand/gontrol/internal/migrator"
+	"github.com/lorsanstand/gontrol/internal/utils/logger"
 	"github.com/lorsanstand/gontrol/migrations"
 )
 
@@ -31,9 +31,9 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("load config: %v", err)
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: &cfg.LogLevel}))
+	log := logger.Init(cfg.LogLevel)
 
-	return &App{logger: logger, cfg: cfg}, nil
+	return &App{logger: log, cfg: cfg}, nil
 }
 
 func (a *App) Run() int {
