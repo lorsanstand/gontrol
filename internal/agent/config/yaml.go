@@ -15,6 +15,7 @@ var ErrCreateFile = errors.New("create new config.yaml")
 type Config struct {
 	HubURL   *string    `yaml:"hub-url"`
 	LogLevel slog.Level `yaml:"log-level"`
+	LogFormat string `yaml:"log-format"`
 	AgentID  *uuid.UUID `yaml:"agent-id"`
 }
 
@@ -58,7 +59,8 @@ func (c *Config) Save() error {
 }
 
 func createFile() error {
-	cfg := Config{HubURL: nil, LogLevel: slog.LevelWarn, AgentID: nil}
+	// ИСПРАВИТЬ ПРИ HUBURL NIL ПРОГРАММА ЛОМАЕТСЯ
+	cfg := Config{HubURL: nil, LogLevel: slog.LevelWarn, LogFormat: "auto", AgentID: nil}
 
 	return cfg.Save()
 }

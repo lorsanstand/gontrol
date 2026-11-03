@@ -8,19 +8,30 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-
-func Init(level slog.Level) *slog.Logger {
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		logger := slog.New(tint.NewTextHandler(os.Stdout, &tint.Options{
-			AddSource:   true,
-			Level:       level,
-			ReplaceAttr: nil,
-			TimeFormat:  "15:04:05",
-			NoColor:     false,
-		}))
-		return logger
+func Init(level slog.Level, format string) *slog.Logger {
+	switch format {
+	case "json":
+		return jsonLogger(level)
+	case "console":
+		return consoleLogger(level)
+	default:
+		if isatty.IsTerminal(os.Stdout.Fd()) {
+			return consoleLogger(level)
+		}
+		return jsonLogger(level)
 	}
+}
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-	return logger
+func jsonLogger(l slog.Level) *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: l}))
+}
+
+func consoleLogger(l slog.Level) *slog.Logger {
+	return slog.New(tint.NewTextHandler(os.Stdout, &tint.Options{
+		AddSource:   true,
+		Level:       l,
+		ReplaceAttr: nil,
+		TimeFormat:  "15:04:05",
+		NoColor:     false,
+	}))
 }

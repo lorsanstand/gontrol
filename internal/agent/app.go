@@ -28,7 +28,7 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
-	log := logger.Init(cfg.LogLevel)
+	log := logger.Init(cfg.LogLevel, cfg.LogFormat)
 
 	return &App{cfg: cfg, logger: log}, nil
 }

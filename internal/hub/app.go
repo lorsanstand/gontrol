@@ -31,7 +31,7 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("load config: %v", err)
 	}
 
-	log := logger.Init(cfg.LogLevel)
+	log := logger.Init(cfg.LogLevel, cfg.LogFormat)
 
 	return &App{logger: log, cfg: cfg}, nil
 }
