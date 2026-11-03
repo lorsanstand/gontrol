@@ -7,11 +7,11 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/lorsanstand/gontrol/internal/agent/config"
 	"github.com/lorsanstand/gontrol/internal/agent/service"
+	"github.com/lorsanstand/gontrol/internal/utils/logger"
 )
 
 type App struct {
@@ -28,9 +28,9 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
+	log := logger.Init(cfg.LogLevel, cfg.LogFormat)
 
-	return &App{cfg: cfg, logger: logger}, nil
+	return &App{cfg: cfg, logger: log}, nil
 }
 
 func (a *App) Run() int {

@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Port       int        `env:"PORT" envDefault:"5467"`
 	LogLevel   slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
+	LogFormat  string     `env:"LOG_FORMAT" envDefault:"auto"`
 	DBPort     int        `env:"DB_PORT,required"`
 	DBHost     string     `env:"DB_HOST,required"`
 	DBPassword string     `env:"DB_PASS,required"`
