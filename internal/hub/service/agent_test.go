@@ -177,6 +177,7 @@ func TestAgentService_GetAll_Successful(t *testing.T) {
 	expecteds := make([]modelsHub.Agent, 0, len(agentsDB))
 
 	for _, agentDB := range agentsDB {
+		//nolint:gosec // G404
 		state := rand.IntN(2) == 1
 
 		expected := modelsHub.Agent{
