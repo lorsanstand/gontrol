@@ -32,4 +32,13 @@ type tasksRepository interface {
 	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
 }
 
+type taskService interface {
+	Pop(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error)
+}
+
+type agentService interface {
+	Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error)
+	SetOnlineAgent(id uuid.UUID)
+}
+
 type generatorID func() (uuid.UUID, error)
