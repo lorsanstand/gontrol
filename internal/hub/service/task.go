@@ -11,30 +11,27 @@ import (
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 )
 
-type tasksRepository interface {
-	CreateTask(ctx context.Context, task modelsHub.Task) (*modelsHub.Task, error)
-	GetTaskByID(ctx context.Context, id uuid.UUID) (*modelsHub.Task, error)
-	GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]modelsHub.Task, error)
-	NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error)
-	EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error
-	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
-}
-
 // TaskService структура для работы с задачами для агента.
 type TaskService struct {
 	log   *slog.Logger
 	store tasksRepository
+	genID generatorID
 }
 
 func NewTasksService(logger *slog.Logger, storage tasksRepository) *TaskService {
-	return &TaskService{store: storage, log: logger}
+	return &TaskService{store: storage, log: logger, genID: uuid.NewV7}
 }
 
 // Метод Add создает задачу и назначает ее указанному агенту.
 // Если задачу невозможно сохранить или агент не существует, возвращается ошибка.
 func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) (*modelsHub.Task, error) {
+	id, err := t.genID()
+	if err != nil {
+		return nil, fmt.Errorf("generate id: %w", err)
+	}
 
 	task := modelsHub.Task{
+		ID:      id,
 		AgentID: taskCreate.AgentID,
 		Status:  modelsHub.TaskStatusPending,
 		Command: taskCreate.Command,
@@ -105,7 +102,7 @@ func (t *TaskService) GetByID(ctx context.Context, id uuid.UUID) (*modelsHub.Tas
 func (t *TaskService) GetByAgentID(ctx context.Context, id uuid.UUID) ([]modelsHub.Task, error) {
 	taskDB, err := t.store.GetTasksByAgentID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("get tasks: %w", err)
+		return []modelsHub.Task{}, fmt.Errorf("get tasks: %w", err)
 	}
 
 	return taskDB, nil

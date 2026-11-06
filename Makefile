@@ -1,4 +1,4 @@
-.PHONY: build run-hub run-agent lint test create-migrate
+.PHONY: build run-hub run-agent lint test create-migrate, gen, cover
 
 NAME ?= default_migration
 
@@ -18,5 +18,15 @@ lint:
 test:
 	go test -v -race ./...
 
+cover:
+	go test -short -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	firefox coverage.html
+	rm coverage.out
+
 create-migrate:
 	migrate create -ext sql -dir ./migrations -seq $(NAME)
+
+gen:
+	sqlc generate
+	go generate ./...

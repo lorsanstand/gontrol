@@ -10,17 +10,17 @@ import (
 
 // HeartbeatService структура для обработки heartbeat
 type HeartbeatService struct {
-	agent *AgentService
-	task  *TaskService
+	agent agentService
+	task  taskService
 }
 
-func NewHeartbeatService(agent *AgentService, task *TaskService) *HeartbeatService {
+func NewHeartbeatService(agent agentService, task taskService) *HeartbeatService {
 	return &HeartbeatService{agent: agent, task: task}
 }
 
 // Handle обновляет статус агента и возращает ID и задачу для выполнения.
-// Если не удалось проверить существует ли агент возращается ErrAgentNotFound.
-// Если задача нет то возращается nil в поле Tasks
+// Если не удалось проверить существует ли агент, возвращается ErrAgentNotFound.
+// Если задачи нет, то возвращается nil в поле Tasks
 func (h *HeartbeatService) Handle(ctx context.Context, heartbeatReq models.HeartbeatRequest) (*models.HeartbeatResponse, error) {
 	agent, err := h.agent.Get(ctx, heartbeatReq.AgentID)
 	if err != nil {

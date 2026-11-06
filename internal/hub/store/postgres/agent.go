@@ -13,6 +13,8 @@ import (
 	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
 )
 
+//go:generate mockgen -destination=mocks/mock_querier.go -package=mocks  ./gen Querier
+
 type AgentRepository struct {
 	db *sql.DB
 	q  gen.Querier
@@ -22,15 +24,11 @@ func NewAgentRepository(db *sql.DB) *AgentRepository {
 	return &AgentRepository{db: db, q: gen.New(db)}
 }
 
-// CreateAgent создает агента в БД. передается агент без ID и даты создания возращается готовый агент из БД.
+// CreateAgent создает агента в БД. передается агент без даты создания возвращается готовый агент из БД.
 func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent) (*modelsHub.Agent, error) {
-	id, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("generate id: %w", err)
-	}
 
 	agentCreate := gen.CreateAgentParams{
-		ID:          id,
+		ID:          agent.ID,
 		Name:        agent.Name,
 		Os:          agent.OS,
 		Hostname:    agent.Hostname,
@@ -42,17 +40,11 @@ func (a *AgentRepository) CreateAgent(ctx context.Context, agent modelsHub.Agent
 		return nil, fmt.Errorf("insert agent into db: %w", err)
 	}
 
-	return &modelsHub.Agent{
-		ID:        agentDB.ID,
-		Name:      agentDB.Name,
-		OS:        agentDB.Os,
-		Hostname:  agentDB.Hostname,
-		CreatedAt: agentDB.CreatedAt,
-	}, nil
+	return toAgent(agentDB)
 }
 
 // GetAgentByID возращает агента по ID.
-// Если агента нет то возращает store.ErrNotFound
+// Если агента нет возращает store.ErrNotFound
 func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*modelsHub.Agent, error) {
 	agentDB, err := a.q.GetAgentByID(ctx, id)
 	if err != nil {
@@ -63,16 +55,11 @@ func (a *AgentRepository) GetAgentByID(ctx context.Context, id uuid.UUID) (*mode
 		return nil, fmt.Errorf("select agent into db: %w", err)
 	}
 
-	return &modelsHub.Agent{
-		ID:        agentDB.ID,
-		Name:      agentDB.Name,
-		OS:        agentDB.Os,
-		Hostname:  agentDB.Hostname,
-		CreatedAt: agentDB.CreatedAt,
-	}, nil
+	return toAgent(agentDB)
 }
 
-// GetAllAgents возращает всех агентов
+// GetAllAgents возращает всех агентов.
+// Если агентов нет возращает пустой слайс.
 func (a *AgentRepository) GetAllAgents(ctx context.Context) ([]modelsHub.Agent, error) {
 	agentsDB, err := a.q.GetAllAgents(ctx)
 	if err != nil {
@@ -81,15 +68,12 @@ func (a *AgentRepository) GetAllAgents(ctx context.Context) ([]modelsHub.Agent, 
 
 	agents := make([]modelsHub.Agent, 0, len(agentsDB))
 	for _, agentDB := range agentsDB {
-		agent := modelsHub.Agent{
-			ID:        agentDB.ID,
-			Name:      agentDB.Name,
-			OS:        agentDB.Os,
-			Hostname:  agentDB.Hostname,
-			CreatedAt: agentDB.CreatedAt,
+		agent, err := toAgent(agentDB)
+		if err != nil {
+			return nil, err
 		}
 
-		agents = append(agents, agent)
+		agents = append(agents, *agent)
 	}
 
 	return agents, nil
