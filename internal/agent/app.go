@@ -11,6 +11,7 @@ import (
 
 	"github.com/lorsanstand/gontrol/internal/agent/config"
 	"github.com/lorsanstand/gontrol/internal/agent/service"
+	"github.com/lorsanstand/gontrol/internal/agent/service/runner"
 	"github.com/lorsanstand/gontrol/internal/utils/logger"
 )
 
@@ -34,7 +35,7 @@ func NewApp() (*App, error) {
 }
 
 func (a *App) Run() int {
-	a.logger.Info("starting gontrol-agent...")
+	a.logger.Info("starting gontrol-runner...")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -60,10 +61,10 @@ func (a *App) Run() int {
 		return 1
 	}
 
-	agent := service.NewAgentRunner(a.logger, task, hub, system)
+	agent := runner.NewAgentRunner(a.logger, task, hub, system)
 
 	err = agent.Serve(ctx)
-	a.logger.Error("stop agent serve", slog.Any("error", err))
+	a.logger.Error("stop runner serve", slog.Any("error", err))
 
 	return 0
 }
