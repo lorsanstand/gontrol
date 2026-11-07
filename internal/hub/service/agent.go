@@ -22,7 +22,7 @@ type AgentService struct {
 }
 
 func NewAgentService(logger *slog.Logger, storage agentRepository, state agentStateRepository) *AgentService {
-	return &AgentService{store: storage, log: logger, state: state}
+	return &AgentService{store: storage, log: logger, state: state, genID: uuid.NewV7}
 }
 
 // GetAll возращает всех агентов в хранилище.
