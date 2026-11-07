@@ -9,7 +9,7 @@ import (
 )
 
 func toTask(taskDB gen.Task) (*modelsHub.Task, error) {
-	argsDB := new(map[string]string)
+	argsDB := new(map[string]json.RawMessage)
 	status, err := modelsHub.TaskStatusParse(taskDB.Status)
 	if err != nil {
 		return nil, err
