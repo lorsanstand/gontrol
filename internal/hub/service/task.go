@@ -22,8 +22,9 @@ func NewTasksService(logger *slog.Logger, storage tasksRepository) *TaskService 
 	return &TaskService{store: storage, log: logger, genID: uuid.NewV7}
 }
 
-// Метод Add создает задачу и назначает ее указанному агенту.
-// Если задачу невозможно сохранить или агент не существует, возвращается ошибка.
+// Add создает задачу и назначает ее указанному агенту.
+// Если нужного агента не существует, возвращается ошибка.
+// Если задачу невозможно сохранить, возвращается ошибка.
 func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) (*modelsHub.Task, error) {
 	id, err := t.genID()
 	if err != nil {
@@ -42,6 +43,10 @@ func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) 
 
 	taskDB, err := t.store.CreateTask(ctx, task)
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+
 		return nil, fmt.Errorf("create task: %w", err)
 	}
 

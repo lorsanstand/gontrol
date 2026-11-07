@@ -8,6 +8,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
 	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
@@ -24,6 +26,7 @@ func NewTaskRepository(db *sql.DB) *TaskRepository {
 
 // CreateTask создает новую задачу для определенного агента.
 // Передается все поля models.Task кроме createdAt.
+// Если агента нет возвращается store.ErrNotFound.
 func (t *TaskRepository) CreateTask(ctx context.Context, task modelsHub.Task) (*modelsHub.Task, error) {
 	args, err := json.Marshal(task.Args)
 	if err != nil {
@@ -42,6 +45,12 @@ func (t *TaskRepository) CreateTask(ctx context.Context, task modelsHub.Task) (*
 
 	taskDB, err := t.q.CreateTask(ctx, taskCreate)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == pgerrcode.ForeignKeyViolation {
+				return nil, store.ErrNotFound
+			}
+		}
+
 		return nil, fmt.Errorf("insert task into db: %w", err)
 	}
 
