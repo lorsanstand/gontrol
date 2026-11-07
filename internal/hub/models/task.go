@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -44,14 +45,14 @@ func TaskStatusParse(str string) (TaskStatus, error) {
 }
 
 type Task struct {
-	ID        uuid.UUID         `json:"id"`
-	AgentID   uuid.UUID         `json:"agent_id"`
-	Status    TaskStatus        `json:"status"`
-	Command   string            `json:"command"`
-	Args      map[string]string `json:"args"`
-	ExecMs    *int              `json:"exec_ms"`
-	Result    *string           `json:"result"`
-	CreatedAt time.Time         `json:"created_at"`
+	ID        uuid.UUID                  `json:"id"`
+	AgentID   uuid.UUID                  `json:"agent_id"`
+	Status    TaskStatus                 `json:"status"`
+	Command   string                     `json:"command"`
+	Args      map[string]json.RawMessage `json:"args"`
+	ExecMs    *int                       `json:"exec_ms"`
+	Result    *string                    `json:"result"`
+	CreatedAt time.Time                  `json:"created_at"`
 }
 
 type CreateTask struct {
