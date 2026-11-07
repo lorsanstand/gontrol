@@ -87,8 +87,10 @@ func (c *CommandSpecs) ValidateTask(task Task) error {
 
 	for _, argSpec := range command.Args {
 		arg, ok := task.Args[argSpec.Name]
-		if argSpec.Required && !ok {
-			errs = errors.Join(errs, fmt.Errorf("%s is required", argSpec.Name))
+		if !ok {
+			if argSpec.Required {
+				errs = errors.Join(errs, fmt.Errorf("%s is required", argSpec.Name))
+			}
 			continue
 		}
 
