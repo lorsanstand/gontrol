@@ -13,12 +13,11 @@ type Command struct {
 	Spec models.CommandSpec
 }
 
-type Commands struct {
-	Commands map[string]Command
-}
+// Commands имеет тип map поэтому инициализация по правилам map
+type Commands map[string]Command
 
-func (c *Commands) GetCommandAndValidate(task models.Task) (*Command, error) {
-	command, ok := c.Commands[task.Command]
+func (c Commands) GetCommandAndValidate(task models.Task) (*Command, error) {
+	command, ok := c[task.Command]
 	if !ok {
 		return nil, fmt.Errorf("command not found")
 	}

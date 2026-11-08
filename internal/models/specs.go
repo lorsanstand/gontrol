@@ -91,12 +91,11 @@ func (c *CommandSpec) ValidateArgs(args map[string]json.RawMessage) error {
 	return errs
 }
 
-type CommandSpecs struct {
-	Commands map[string]CommandSpec
-}
+// CommandSpecs это тип map поэтому инициализация
+type CommandSpecs map[string]CommandSpec
 
-func (c *CommandSpecs) ValidateTask(task Task) error {
-	command, ok := c.Commands[task.Command]
+func (c CommandSpecs) ValidateTask(task Task) error {
+	command, ok := c[task.Command]
 	if !ok {
 		return fmt.Errorf("command not found")
 	}

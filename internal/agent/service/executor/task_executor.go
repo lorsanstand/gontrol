@@ -40,3 +40,13 @@ func (t *TaskExecutor) Execute(ctx context.Context, task models.Task) (*models.T
 		TimeExecMS: int(d.Milliseconds()),
 	}, nil
 }
+
+func (t *TaskExecutor) GetCommands() models.CommandSpecs {
+	specs := make(map[string]models.CommandSpec, len(commands))
+
+	for name, command := range commands {
+		specs[name] = command.Spec
+	}
+
+	return specs
+}
