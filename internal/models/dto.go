@@ -7,8 +7,9 @@ import (
 )
 
 type CreateAgent struct {
-	OS       string `json:"OS"`
-	Hostname string `json:"hostname"`
+	OS           string       `json:"OS"`
+	Hostname     string       `json:"hostname"`
+	CommandSpecs CommandSpecs `json:"command_specs"`
 }
 
 type Agent struct {

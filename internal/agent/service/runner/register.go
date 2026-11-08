@@ -20,9 +20,16 @@ func (a *AgentRunner) RegisterOrUpdate(ctx context.Context) (*models.Agent, erro
 
 // register регистрирует агента и сохраняет AgentID.
 func (a *AgentRunner) register(ctx context.Context) (*models.Agent, error) {
-	specs := a.system.GetSpecs()
+	systemSpecs := a.system.GetSpecs()
+	commandSpecs := a.taskExec.GetCommands()
 
-	agent, err := a.hub.RegisterAgent(ctx, specs)
+	create := models.CreateAgent{
+		OS:           systemSpecs.OS,
+		Hostname:     systemSpecs.Hostname,
+		CommandSpecs: commandSpecs,
+	}
+
+	agent, err := a.hub.RegisterAgent(ctx, create)
 	if err != nil {
 		return nil, fmt.Errorf("register runner in hub: %w", err)
 	}
