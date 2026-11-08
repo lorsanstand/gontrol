@@ -11,6 +11,7 @@ import (
 
 	"github.com/lorsanstand/gontrol/internal/agent/config"
 	"github.com/lorsanstand/gontrol/internal/agent/service"
+	"github.com/lorsanstand/gontrol/internal/agent/service/executor"
 	"github.com/lorsanstand/gontrol/internal/agent/service/runner"
 	"github.com/lorsanstand/gontrol/internal/utils/logger"
 )
@@ -54,7 +55,7 @@ func (a *App) Run() int {
 	}
 
 	hub := service.NewHubClient(*hubURL, client)
-	task := &service.TaskExecutor{}
+	task := executor.New(a.logger)
 	system, err := service.SystemInit(a.cfg)
 	if err != nil {
 		a.logger.Error("error system init", slog.Any("error", err))

@@ -73,20 +73,11 @@ type CommandSpec struct {
 	Args    []ArgSpec `json:"args"`
 }
 
-type CommandSpecs struct {
-	Commands map[string]CommandSpec
-}
-
-func (c *CommandSpecs) ValidateTask(task Task) error {
-	command, ok := c.Commands[task.Command]
-	if !ok {
-		return fmt.Errorf("command not found")
-	}
-
+func (c *CommandSpec) ValidateArgs(args map[string]json.RawMessage) error {
 	var errs error = nil
 
-	for _, argSpec := range command.Args {
-		arg, ok := task.Args[argSpec.Name]
+	for _, argSpec := range c.Args {
+		arg, ok := args[argSpec.Name]
 		if !ok {
 			if argSpec.Required {
 				errs = errors.Join(errs, fmt.Errorf("%s is required", argSpec.Name))
@@ -98,4 +89,17 @@ func (c *CommandSpecs) ValidateTask(task Task) error {
 	}
 
 	return errs
+}
+
+type CommandSpecs struct {
+	Commands map[string]CommandSpec
+}
+
+func (c *CommandSpecs) ValidateTask(task Task) error {
+	command, ok := c.Commands[task.Command]
+	if !ok {
+		return fmt.Errorf("command not found")
+	}
+
+	return command.ValidateArgs(task.Args)
 }
