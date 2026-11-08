@@ -25,7 +25,7 @@ func (a *AgentRunner) Heartbeat(ctx context.Context, hb models.HeartbeatRequest)
 		return fmt.Errorf("execute task: %w", err)
 	}
 
-	if err = a.hub.SendTaskResult(ctx, result.ID, result); err != nil {
+	if err = a.hub.SendTaskResult(ctx, result.ID, *result); err != nil {
 		return fmt.Errorf("send result task: %w", err)
 	}
 
