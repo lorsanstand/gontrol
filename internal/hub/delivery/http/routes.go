@@ -22,7 +22,7 @@ func RegisterRoutes(
 	taskRouter := chi.NewRouter()
 	taskHandler := handler.NewTaskHandler(logger, task)
 	taskRouter.Post("/", taskHandler.PostCreateTask)
-	taskRouter.Post("/{id}/result", taskHandler.PostResultTask)
+	taskRouter.Post("/result", taskHandler.PostResultTask)
 	taskRouter.Get("/{id}", taskHandler.GetTask)
 	taskRouter.Get("/agent/{id}", taskHandler.GetTaskByAgentID)
 
