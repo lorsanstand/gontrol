@@ -20,6 +20,7 @@ type CommandSpecsRepository struct {
 	q  gen.Querier
 }
 
+// GetCommandSpecs выдает спецификацию комманд по ID агента.
 func (c *CommandSpecsRepository) GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error) {
 	command, err := c.q.GetCommandsByAgentID(ctx, agentID)
 	if err != nil {
@@ -29,7 +30,8 @@ func (c *CommandSpecsRepository) GetCommandSpecs(ctx context.Context, agentID uu
 	return toCommands(command)
 }
 
-
+// SetCommandSpecs сохраняет или изменяет спецификацию команд по ID агента.
+// Если агента не существует выдает ошибку store.ErrNotFound
 func (c *CommandSpecsRepository) SetCommandSpecs(ctx context.Context, agentID uuid.UUID, command models.CommandSpecs) error {
 	data, err := json.Marshal(command)
 	if err != nil {
