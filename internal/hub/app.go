@@ -56,6 +56,7 @@ func (a *App) Run() int {
 
 	agentRepo := postgres.NewAgentRepository(db)
 	taskRepo := postgres.NewTaskRepository(db)
+	specsRepo := postgres.NewCommandSpecsRepository(db)
 
 	agentStateRepo := in_memory.NewAgentStateStore(TimeTTLOnlineAgent)
 	go func() {
@@ -63,7 +64,7 @@ func (a *App) Run() int {
 		a.logger.Warn("auto cleaner state store stopped", slog.Any("error", err))
 	}()
 
-	agentService := service.NewAgentService(a.logger, agentRepo, agentStateRepo)
+	agentService := service.NewAgentService(a.logger, agentRepo, agentStateRepo, specsRepo)
 	taskService := service.NewTasksService(a.logger, taskRepo)
 	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 

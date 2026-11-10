@@ -33,6 +33,7 @@ type tasksRepository interface {
 	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
 }
 
+//go:generate mockgen -destination=mocks/mock_specs_repo.go -package=mocks . commandSpecsRepository
 type commandSpecsRepository interface {
 	SetCommandSpecs(ctx context.Context, agentID uuid.UUID, specs models.CommandSpecs) error
 	GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error)
