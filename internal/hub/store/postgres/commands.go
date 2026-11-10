@@ -20,6 +20,10 @@ type CommandSpecsRepository struct {
 	q  gen.Querier
 }
 
+func NewCommandSpecsRepository(db *sql.DB) *CommandSpecsRepository {
+	return &CommandSpecsRepository{db: db, q: gen.New(db)}
+}
+
 // GetCommandSpecs выдает спецификацию комманд по ID агента.
 func (c *CommandSpecsRepository) GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error) {
 	command, err := c.q.GetCommandsByAgentID(ctx, agentID)
