@@ -17,12 +17,18 @@ import (
 type AgentService struct {
 	store agentRepository
 	state agentStateRepository
+	specs commandSpecsRepository
 	genID generatorID
 	log   *slog.Logger
 }
 
-func NewAgentService(logger *slog.Logger, storage agentRepository, state agentStateRepository) *AgentService {
-	return &AgentService{store: storage, log: logger, state: state, genID: uuid.NewV7}
+func NewAgentService(
+	logger *slog.Logger,
+	storage agentRepository,
+	state agentStateRepository,
+	specs commandSpecsRepository,
+	) *AgentService {
+	return &AgentService{store: storage, log: logger, state: state, specs: specs, genID: uuid.NewV7}
 }
 
 // GetAll возращает всех агентов в хранилище.
@@ -62,6 +68,7 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 	return agentDB, nil
 }
 
+// Register сохраняет агента и спецификацию ее команд.
 func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
 	id, err := a.genID()
 	if err != nil {
@@ -72,6 +79,10 @@ func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent
 	agentDB, err := a.store.CreateAgent(ctx, newAgent)
 	if err != nil {
 		return nil, fmt.Errorf("create agent: %w", err)
+	}
+
+	if err = a.specs.SetCommandSpecs(ctx, agentDB.ID, agentReq.CommandSpecs); err != nil {
+		return nil, fmt.Errorf("save command specification: %w", err)
 	}
 
 	return agentDB, nil

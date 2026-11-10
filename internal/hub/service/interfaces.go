@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
+	"github.com/lorsanstand/gontrol/internal/models"
 )
 
 //go:generate mockgen -destination=mocks/mock_agent_repo.go -package=mocks . agentRepository
@@ -30,6 +31,11 @@ type tasksRepository interface {
 	NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (*modelsHub.Task, error)
 	EditStatusByID(ctx context.Context, id uuid.UUID, status modelsHub.TaskStatus) error
 	EditResultByID(ctx context.Context, id uuid.UUID, resultStr string, status modelsHub.TaskStatus, execTimeMS int) error
+}
+
+type commandSpecsRepository interface {
+	SetCommandSpecs(ctx context.Context, agentID uuid.UUID, specs models.CommandSpecs) error
+	GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error)
 }
 
 type taskService interface {

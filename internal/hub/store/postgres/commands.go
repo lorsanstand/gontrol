@@ -35,7 +35,7 @@ func (c *CommandSpecsRepository) GetCommandSpecs(ctx context.Context, agentID uu
 }
 
 // SetCommandSpecs сохраняет или изменяет спецификацию команд по ID агента.
-// Если агента не существует выдает ошибку store.ErrNotFound
+// Если агента не существует, выдает ошибку store.ErrNotFound
 func (c *CommandSpecsRepository) SetCommandSpecs(ctx context.Context, agentID uuid.UUID, command models.CommandSpecs) error {
 	data, err := json.Marshal(command)
 	if err != nil {
