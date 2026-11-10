@@ -7,6 +7,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
@@ -22,9 +23,11 @@ type Querier interface {
 	EditStatusTaskByID(ctx context.Context, arg EditStatusTaskByIDParams) (sql.Result, error)
 	GetAgentByID(ctx context.Context, id uuid.UUID) (Agent, error)
 	GetAllAgents(ctx context.Context) ([]Agent, error)
+	GetCommandsByAgentID(ctx context.Context, agentID uuid.UUID) (json.RawMessage, error)
 	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)
 	GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]Task, error)
 	NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (Task, error)
+	SetCommandsByAgentID(ctx context.Context, arg SetCommandsByAgentIDParams) (sql.Result, error)
 }
 
 var _ Querier = (*Queries)(nil)

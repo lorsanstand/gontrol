@@ -1,5 +1,5 @@
 info:
-  name: get agent
+  name: get runner
   type: http
   seq: 1
 

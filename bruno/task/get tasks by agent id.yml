@@ -1,11 +1,11 @@
 info:
-  name: get tasks by agent id
+  name: get tasks by runner id
   type: http
   seq: 4
 
 http:
   method: GET
-  url: 127.0.0.1:8089/api/v1/tasks/agent/:id
+  url: 127.0.0.1:8089/api/v1/tasks/runner/:id
   params:
     - name: id
       value: ""

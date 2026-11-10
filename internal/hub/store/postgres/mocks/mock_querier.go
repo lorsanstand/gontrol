@@ -12,6 +12,7 @@ package mocks
 import (
 	context "context"
 	sql "database/sql"
+	json "encoding/json"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -193,6 +194,21 @@ func (mr *MockQuerierMockRecorder) GetAllAgents(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllAgents", reflect.TypeOf((*MockQuerier)(nil).GetAllAgents), ctx)
 }
 
+// GetCommandsByAgentID mocks base method.
+func (m *MockQuerier) GetCommandsByAgentID(ctx context.Context, agentID uuid.UUID) (json.RawMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCommandsByAgentID", ctx, agentID)
+	ret0, _ := ret[0].(json.RawMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCommandsByAgentID indicates an expected call of GetCommandsByAgentID.
+func (mr *MockQuerierMockRecorder) GetCommandsByAgentID(ctx, agentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommandsByAgentID", reflect.TypeOf((*MockQuerier)(nil).GetCommandsByAgentID), ctx, agentID)
+}
+
 // GetTaskByID mocks base method.
 func (m *MockQuerier) GetTaskByID(ctx context.Context, id uuid.UUID) (postgres.Task, error) {
 	m.ctrl.T.Helper()
@@ -236,4 +252,19 @@ func (m *MockQuerier) NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) 
 func (mr *MockQuerierMockRecorder) NextTaskByAgentID(ctx, agentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextTaskByAgentID", reflect.TypeOf((*MockQuerier)(nil).NextTaskByAgentID), ctx, agentID)
+}
+
+// SetCommandsByAgentID mocks base method.
+func (m *MockQuerier) SetCommandsByAgentID(ctx context.Context, arg postgres.SetCommandsByAgentIDParams) (sql.Result, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetCommandsByAgentID", ctx, arg)
+	ret0, _ := ret[0].(sql.Result)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetCommandsByAgentID indicates an expected call of SetCommandsByAgentID.
+func (mr *MockQuerierMockRecorder) SetCommandsByAgentID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCommandsByAgentID", reflect.TypeOf((*MockQuerier)(nil).SetCommandsByAgentID), ctx, arg)
 }

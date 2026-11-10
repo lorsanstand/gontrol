@@ -6,6 +6,7 @@ import (
 
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	gen "github.com/lorsanstand/gontrol/internal/hub/store/postgres/gen"
+	"github.com/lorsanstand/gontrol/internal/models"
 )
 
 func toTask(taskDB gen.Task) (*modelsHub.Task, error) {
@@ -41,4 +42,15 @@ func toAgent(agentDB gen.Agent) (*modelsHub.Agent, error) {
 		Description: agentDB.Description,
 		CreatedAt:   agentDB.CreatedAt,
 	}, nil
+}
+
+func toCommands(data json.RawMessage) (models.CommandSpecs, error) {
+	var commands models.CommandSpecs
+
+	err := json.Unmarshal(data, &commands)
+	if err != nil {
+		return models.CommandSpecs{}, err
+	}
+
+	return commands, nil
 }

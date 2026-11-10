@@ -1,5 +1,5 @@
 info:
-  name: edit agent name
+  name: edit runner name
   type: http
   seq: 3
 
