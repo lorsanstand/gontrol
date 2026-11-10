@@ -7,7 +7,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -25,7 +24,7 @@ func (q *Queries) GetCommandsByAgentID(ctx context.Context, agentID uuid.UUID) (
 	return commands, err
 }
 
-const setCommandsByAgentID = `-- name: SetCommandsByAgentID :execresult
+const setCommandsByAgentID = `-- name: SetCommandsByAgentID :exec
 INSERT INTO Commands (agent_id, commands)
     VALUES ($1, $2)
     ON CONFLICT (agent_id)
@@ -37,6 +36,7 @@ type SetCommandsByAgentIDParams struct {
 	Commands json.RawMessage
 }
 
-func (q *Queries) SetCommandsByAgentID(ctx context.Context, arg SetCommandsByAgentIDParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, setCommandsByAgentID, arg.AgentID, arg.Commands)
+func (q *Queries) SetCommandsByAgentID(ctx context.Context, arg SetCommandsByAgentIDParams) error {
+	_, err := q.db.ExecContext(ctx, setCommandsByAgentID, arg.AgentID, arg.Commands)
+	return err
 }

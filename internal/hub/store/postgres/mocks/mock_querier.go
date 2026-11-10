@@ -255,12 +255,11 @@ func (mr *MockQuerierMockRecorder) NextTaskByAgentID(ctx, agentID any) *gomock.C
 }
 
 // SetCommandsByAgentID mocks base method.
-func (m *MockQuerier) SetCommandsByAgentID(ctx context.Context, arg postgres.SetCommandsByAgentIDParams) (sql.Result, error) {
+func (m *MockQuerier) SetCommandsByAgentID(ctx context.Context, arg postgres.SetCommandsByAgentIDParams) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetCommandsByAgentID", ctx, arg)
-	ret0, _ := ret[0].(sql.Result)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // SetCommandsByAgentID indicates an expected call of SetCommandsByAgentID.

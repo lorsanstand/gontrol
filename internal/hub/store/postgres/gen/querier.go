@@ -27,7 +27,7 @@ type Querier interface {
 	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)
 	GetTasksByAgentID(ctx context.Context, agentID uuid.UUID) ([]Task, error)
 	NextTaskByAgentID(ctx context.Context, agentID uuid.UUID) (Task, error)
-	SetCommandsByAgentID(ctx context.Context, arg SetCommandsByAgentIDParams) (sql.Result, error)
+	SetCommandsByAgentID(ctx context.Context, arg SetCommandsByAgentIDParams) error
 }
 
 var _ Querier = (*Queries)(nil)

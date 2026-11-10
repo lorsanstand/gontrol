@@ -38,7 +38,7 @@ func (c *CommandSpecsRepository) SetCommandSpecs(ctx context.Context, agentID uu
 
 	param := gen.SetCommandsByAgentIDParams{AgentID: agentID, Commands: data}
 
-	result, err := c.q.SetCommandsByAgentID(ctx, param)
+	err = c.q.SetCommandsByAgentID(ctx, param)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == pgerrcode.ForeignKeyViolation {
@@ -49,5 +49,5 @@ func (c *CommandSpecsRepository) SetCommandSpecs(ctx context.Context, agentID uu
 		return fmt.Errorf("insert command into db: %w", err)
 	}
 
-	return ifChangesInDB(result)
+	return nil
 }
