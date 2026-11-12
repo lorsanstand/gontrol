@@ -50,6 +50,14 @@ func TestCommandSpecsRepository_GetCommandSpecs(t *testing.T) {
 			},
 		},
 		{
+			name:        "error not found",
+			expectedErr: store.ErrNotFound,
+			expected:    models.CommandSpecs{},
+			setupMocks: func(q *mocks.MockQuerier) {
+				q.EXPECT().GetCommandsByAgentID(gomock.Any(), agentID).Return(nil, sql.ErrNoRows)
+			},
+		},
+		{
 			name:        "unhandled error",
 			expectedErr: sql.ErrConnDone,
 			expected:    models.CommandSpecs{},

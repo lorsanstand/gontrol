@@ -25,9 +25,13 @@ func NewCommandSpecsRepository(db *sql.DB) *CommandSpecsRepository {
 }
 
 // GetCommandSpecs выдает спецификацию комманд по ID агента.
+// Если агента не существует, возращает store.ErrNotFound.
 func (c *CommandSpecsRepository) GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error) {
 	command, err := c.q.GetCommandsByAgentID(ctx, agentID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.CommandSpecs{}, store.ErrNotFound
+		}
 		return models.CommandSpecs{}, fmt.Errorf("select command into db: %w", err)
 	}
 
