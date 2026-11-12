@@ -65,7 +65,7 @@ func (a *App) Run() int {
 	}()
 
 	agentService := service.NewAgentService(a.logger, agentRepo, agentStateRepo, specsRepo)
-	taskService := service.NewTasksService(a.logger, taskRepo)
+	taskService := service.NewTasksService(a.logger, taskRepo, specsRepo)
 	heartbeatService := service.NewHeartbeatService(agentService, taskService)
 
 	r := chi.NewRouter()

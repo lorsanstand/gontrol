@@ -17,6 +17,10 @@ func ReturnErrors(w http.ResponseWriter, msg string, err error) {
 	case errors.Is(err, service.ErrTaskNotFound):
 		slog.Debug(msg, slog.Any("error", err))
 		utils.WriteError(w, "Task not found", http.StatusNotFound)
+	case errors.Is(err, service.ErrValidation):
+		slog.Debug(msg, slog.Any("error", err))
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
+
 
 	default:
 		slog.Error(msg, slog.Any("error", err))

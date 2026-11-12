@@ -9,26 +9,43 @@ import (
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/models"
 )
 
 // TaskService структура для работы с задачами для агента.
 type TaskService struct {
 	log   *slog.Logger
 	store tasksRepository
+	specs commandSpecsRepository
 	genID generatorID
 }
 
-func NewTasksService(logger *slog.Logger, storage tasksRepository) *TaskService {
-	return &TaskService{store: storage, log: logger, genID: uuid.NewV7}
+func NewTasksService(logger *slog.Logger, storage tasksRepository, specs commandSpecsRepository) *TaskService {
+	return &TaskService{store: storage, log: logger, genID: uuid.NewV7, specs: specs}
 }
 
 // Add создает задачу и назначает ее указанному агенту.
-// Если нужного агента не существует, возвращается ошибка.
+// Если нужного агента не существует, возвращается ErrAgentNotFound.
 // Если задачу невозможно сохранить, возвращается ошибка.
 func (t *TaskService) Add(ctx context.Context, taskCreate modelsHub.CreateTask) (*modelsHub.Task, error) {
 	id, err := t.genID()
 	if err != nil {
 		return nil, fmt.Errorf("generate id: %w", err)
+	}
+
+	taskSpecs := models.Task{ID: id, Command: taskCreate.Command, Args: taskCreate.Args}
+
+	specs, err := t.specs.GetCommandSpecs(ctx, taskCreate.AgentID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+
+		return nil, fmt.Errorf("get command specification: %w", err)
+	}
+
+	if err = specs.ValidateTask(taskSpecs); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrValidation, err)
 	}
 
 	task := modelsHub.Task{

@@ -1,5 +1,5 @@
 info:
-  name: get tasks by runner id
+  name: get tasks by agent id
   type: http
   seq: 4
 
@@ -8,7 +8,7 @@ http:
   url: 127.0.0.1:8089/api/v1/tasks/runner/:id
   params:
     - name: id
-      value: ""
+      value: 01a1d078-3627-7192-b520-832ca0f72f23
       type: path
   auth: inherit
 
