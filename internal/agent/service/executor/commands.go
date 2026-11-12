@@ -13,12 +13,12 @@ var commands modelsAgent.Commands = map[string]modelsAgent.Command{
 			Label:   "Выключение устройства",
 			Args: []models.ArgSpec{
 				{
-					Name:      "delay",
-					Label:     "Задержка выключения в секундах",
-					Type:      models.ArgInt,
-					Required:  false,
-					Min:       new(0),
-					MaxLength: new(120),
+					Name:     "delay",
+					Label:    "Задержка выключения в секундах",
+					Type:     models.ArgInt,
+					Required: false,
+					Min:      new(0),
+					Max:      new(120),
 				},
 			},
 		},
