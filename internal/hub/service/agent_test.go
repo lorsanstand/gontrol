@@ -424,3 +424,69 @@ func TestAgentService_EditDescAgent(t *testing.T) {
 		})
 	}
 }
+
+func TestAgentService_GetCommandSpecs(t *testing.T) {
+	id := uuid.New()
+	commands := models.CommandSpecs{
+		"test_command": models.CommandSpec{
+			Command: "test_command",
+			Args:    []models.ArgSpec{},
+			Label:   "test_label",
+		},
+	}
+
+	tests := []struct {
+		name       string
+		expectErr  error
+		expected   models.CommandSpecs
+		setupMocks func(s *mocks.MockcommandSpecsRepository)
+	}{
+		{
+			name:      "successful",
+			expectErr: nil,
+			expected:  commands,
+			setupMocks: func(s *mocks.MockcommandSpecsRepository) {
+				s.EXPECT().GetCommandSpecs(gomock.Any(), id).Return(commands, nil).Times(1)
+			},
+		},
+		{
+			name:      "error not found",
+			expectErr: ErrAgentNotFound,
+			expected:  nil,
+			setupMocks: func(s *mocks.MockcommandSpecsRepository) {
+				s.EXPECT().GetCommandSpecs(gomock.Any(), id).Return(models.CommandSpecs{}, store.ErrNotFound).Times(1)
+			},
+		},
+		{
+			name:      "unhandled error",
+			expectErr: sql.ErrConnDone,
+			expected:  nil,
+			setupMocks: func(s *mocks.MockcommandSpecsRepository) {
+				s.EXPECT().GetCommandSpecs(gomock.Any(), id).Return(models.CommandSpecs{}, sql.ErrConnDone).Times(1)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+			c := mocks.NewMockcommandSpecsRepository(ctl)
+
+			a := AgentService{
+				state: s,
+				store: r,
+				log:   &slog.Logger{},
+				specs: c,
+			}
+			ctx := context.Background()
+
+			tt.setupMocks(c)
+
+			agent, err := a.GetCommandSpecs(ctx, id)
+			require.ErrorIs(t, err, tt.expectErr)
+			require.Equal(t, tt.expected, agent)
+		})
+	}
+}

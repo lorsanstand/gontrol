@@ -27,7 +27,7 @@ func NewAgentService(
 	storage agentRepository,
 	state agentStateRepository,
 	specs commandSpecsRepository,
-	) *AgentService {
+) *AgentService {
 	return &AgentService{store: storage, log: logger, state: state, specs: specs, genID: uuid.NewV7}
 }
 
@@ -115,7 +115,22 @@ func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc 
 }
 
 // SetOnlineAgent меняет статус агента с offline на online.
-// Не проверяет существует ли агент.
+// Не проверяет, существует ли агент.
 func (a *AgentService) SetOnlineAgent(id uuid.UUID) {
 	a.state.SetOnline(id)
+}
+
+// GetCommandSpecs возвращает спецификацию команд агента.
+// Если спецификации не найдено возращает ErrAgentNotFound
+func (a *AgentService) GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error) {
+	specs, err := a.specs.GetCommandSpecs(ctx, agentID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+
+		return nil, fmt.Errorf("get command specification: %w", err)
+	}
+
+	return specs, nil
 }
