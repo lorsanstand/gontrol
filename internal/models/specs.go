@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 )
 
 type ArgType string
@@ -12,6 +14,7 @@ const (
 	ArgString ArgType = "string"
 	ArgInt    ArgType = "integer"
 	ArgBool   ArgType = "boolean"
+	ArgEnum   ArgType = "enum"
 )
 
 type ArgSpec struct {
@@ -20,11 +23,12 @@ type ArgSpec struct {
 	Type     ArgType `json:"type"`
 	Required bool    `json:"required"`
 
-	Min         *int   `json:"min,omitempty"`
-	Max         *int   `json:"max,omitempty"`
-	MinLength   *int   `json:"min_length,omitempty"`
-	MaxLength   *int   `json:"max_length,omitempty"`
-	Placeholder string `json:"placeholder"`
+	Min         *int     `json:"min,omitempty"`
+	Max         *int     `json:"max,omitempty"`
+	MinLength   *int     `json:"min_length,omitempty"`
+	MaxLength   *int     `json:"max_length,omitempty"`
+	Enum        []string `json:"enum,omitempty"`
+	Placeholder string   `json:"placeholder"`
 }
 
 func validateArg(spec ArgSpec, raw json.RawMessage) error {
@@ -60,6 +64,17 @@ func validateArg(spec ArgSpec, raw json.RawMessage) error {
 		if spec.MaxLength != nil && len(value) > *spec.MaxLength {
 			return fmt.Errorf("%s is too long", spec.Name)
 		}
+	case ArgEnum:
+		var value string
+		if err := json.Unmarshal(raw, &value); err != nil {
+			return fmt.Errorf("%s must be a string", spec.Name)
+		}
+
+		if slices.Contains(spec.Enum, value) {
+			return nil
+		}
+		return fmt.Errorf("%s must be one of [%s], got %q", spec.Name, strings.Join(spec.Enum, ", "), value)
+
 	default:
 		return fmt.Errorf("unsupported argument type: %s", spec.Type)
 	}
