@@ -21,7 +21,6 @@ func ReturnErrors(w http.ResponseWriter, msg string, err error) {
 		slog.Debug(msg, slog.Any("error", err))
 		utils.WriteError(w, err.Error(), http.StatusBadRequest)
 
-
 	default:
 		slog.Error(msg, slog.Any("error", err))
 		utils.WriteError(w, "Internal server error", http.StatusInternalServerError)
