@@ -74,6 +74,7 @@ func (u *utils) KillProcess(ctx context.Context, args map[string]json.RawMessage
 
 	signal := 15 // По умолчанию мягкое завершение
 	if rawSig, ok := args["signal"]; ok && len(rawSig) > 0 {
+		var sig int
 		if err := json.Unmarshal(rawSig, &sig); err != nil {
 			return nil, fmt.Errorf("invalid signal: %w", err)
 		}
