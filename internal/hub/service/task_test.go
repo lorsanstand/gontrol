@@ -15,7 +15,7 @@ import (
 )
 
 func newTaskServiceMock(r tasksRepository) *TaskService {
-	return NewTasksService(&slog.Logger{}, r)
+	return &TaskService{log: &slog.Logger{}, store: r}
 }
 
 func newDummyTask(id uuid.UUID, agentID uuid.UUID) modelsHub.Task {
