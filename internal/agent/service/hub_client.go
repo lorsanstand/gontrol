@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/uuid"
-	modelsAgent "github.com/lorsanstand/gontrol/internal/agent/models"
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
@@ -62,7 +60,7 @@ func (h *HubClient) SendHeartbeat(ctx context.Context, heartbeat models.Heartbea
 
 // SendTaskResult отправляет хабу результат задачи.
 // Если статус код не равен 201 возращает ошибку.
-func (h *HubClient) SendTaskResult(ctx context.Context, id uuid.UUID, taskResult models.TaskResult) error {
+func (h *HubClient) SendTaskResult(ctx context.Context, taskResult models.TaskResult) error {
 	jsonData, err := json.Marshal(taskResult)
 	if err != nil {
 		return fmt.Errorf("marshal task result request: %w", err)
@@ -71,7 +69,7 @@ func (h *HubClient) SendTaskResult(ctx context.Context, id uuid.UUID, taskResult
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		h.addr.JoinPath("tasks", id.String(), "result").String(),
+		h.addr.JoinPath("tasks", "result").String(),
 		bytes.NewReader(jsonData),
 	)
 	if err != nil {
@@ -95,8 +93,8 @@ func (h *HubClient) SendTaskResult(ctx context.Context, id uuid.UUID, taskResult
 
 // RegisterAgent регистрирует агента.
 // Если статус код не равен 201 возращает ошибку.
-func (h *HubClient) RegisterAgent(ctx context.Context, specs modelsAgent.Specs) (*models.Agent, error) {
-	jsonData, err := json.Marshal(specs)
+func (h *HubClient) RegisterAgent(ctx context.Context, createAgent models.CreateAgent) (*models.Agent, error) {
+	jsonData, err := json.Marshal(createAgent)
 	if err != nil {
 		return nil, fmt.Errorf("marshal specification: %w", err)
 	}

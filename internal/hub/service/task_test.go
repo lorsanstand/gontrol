@@ -10,12 +10,13 @@ import (
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service/mocks"
 	"github.com/lorsanstand/gontrol/internal/hub/store"
+	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
 func newTaskServiceMock(r tasksRepository) *TaskService {
-	return NewTasksService(&slog.Logger{}, r)
+	return &TaskService{log: &slog.Logger{}, store: r}
 }
 
 func newDummyTask(id uuid.UUID, agentID uuid.UUID) modelsHub.Task {
@@ -261,20 +262,28 @@ func TestTaskService_Add(t *testing.T) {
 	taskDB.Result = nil
 	taskCreate := modelsHub.CreateTask{AgentID: taskDB.AgentID, Command: taskDB.Command, Args: taskDB.Args}
 	errTest := errors.New("test")
+	commands := models.CommandSpecs{
+		"test_command": models.CommandSpec{
+			Command: taskDB.Command,
+			Args:    []models.ArgSpec{},
+			Label:   "test_label",
+		},
+	}
 
 	tests := []struct {
 		name       string
 		expectErr  error
 		expected   *modelsHub.Task
 		genID      genIDMock
-		setupMocks func(r *mocks.MocktasksRepository)
+		setupMocks func(r *mocks.MocktasksRepository, c *mocks.MockcommandSpecsRepository)
 	}{
 		{
 			name:      "successful",
 			expectErr: nil,
 			expected:  &taskDB,
 			genID:     genIDMock{err: nil, id: id},
-			setupMocks: func(r *mocks.MocktasksRepository) {
+			setupMocks: func(r *mocks.MocktasksRepository, c *mocks.MockcommandSpecsRepository) {
+				c.EXPECT().GetCommandSpecs(gomock.Any(), agentID).Return(commands, nil).Times(1)
 				r.EXPECT().CreateTask(gomock.Any(), taskDB).Return(&taskDB, nil).Times(1)
 			},
 		},
@@ -283,7 +292,7 @@ func TestTaskService_Add(t *testing.T) {
 			expectErr: errTest,
 			expected:  nil,
 			genID:     genIDMock{err: errTest, id: id},
-			setupMocks: func(r *mocks.MocktasksRepository) {
+			setupMocks: func(r *mocks.MocktasksRepository, c *mocks.MockcommandSpecsRepository) {
 			},
 		},
 		{
@@ -291,7 +300,8 @@ func TestTaskService_Add(t *testing.T) {
 			expectErr: errTest,
 			expected:  nil,
 			genID:     genIDMock{err: nil, id: id},
-			setupMocks: func(r *mocks.MocktasksRepository) {
+			setupMocks: func(r *mocks.MocktasksRepository, c *mocks.MockcommandSpecsRepository) {
+				c.EXPECT().GetCommandSpecs(gomock.Any(), agentID).Return(commands, nil).Times(1)
 				r.EXPECT().CreateTask(gomock.Any(), taskDB).Return(nil, errTest).Times(1)
 			},
 		},
@@ -301,11 +311,12 @@ func TestTaskService_Add(t *testing.T) {
 		runner := func(t *testing.T) {
 			ctl := gomock.NewController(t)
 			r := mocks.NewMocktasksRepository(ctl)
-			s := TaskService{log: &slog.Logger{}, store: r, genID: tt.genID.gen}
+			c := mocks.NewMockcommandSpecsRepository(ctl)
+			s := TaskService{log: &slog.Logger{}, store: r, genID: tt.genID.gen, specs: c}
 
 			ctx := context.Background()
 
-			tt.setupMocks(r)
+			tt.setupMocks(r, c)
 
 			taskTest, err := s.Add(ctx, taskCreate)
 			require.ErrorIs(t, err, tt.expectErr)

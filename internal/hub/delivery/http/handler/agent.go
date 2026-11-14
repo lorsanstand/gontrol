@@ -152,3 +152,28 @@ func (a *AgentHandler) RegisterAgent(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, newAgent, http.StatusCreated)
 }
+
+func (a *AgentHandler) GetCommandSpecs(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	agentID := r.PathValue("id")
+	if agentID == "" {
+		a.log.Debug("agent ID is empty")
+		utils.WriteError(w, "agent ID is required", http.StatusBadRequest)
+		return
+	}
+
+	id, err := uuid.Parse(agentID)
+	if err != nil {
+		a.log.Debug("invalid agent ID", slog.String("AgentID", agentID), slog.Any("error", err))
+		utils.WriteError(w, "invalid agent ID format: must be a valid UUID", http.StatusBadRequest)
+		return
+	}
+
+	specs, err := a.agent.GetCommandSpecs(ctx, id)
+	if err != nil {
+		ReturnErrors(w, "error get agent", err)
+		return
+	}
+
+	utils.WriteJSON(w, specs, http.StatusOK)
+}

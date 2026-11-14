@@ -5,6 +5,7 @@
 package postgres
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,11 @@ type Agent struct {
 	Name        string
 	Description *string
 	CreatedAt   time.Time
+}
+
+type Command struct {
+	AgentID  uuid.UUID
+	Commands json.RawMessage
 }
 
 type Task struct {

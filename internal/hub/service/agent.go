@@ -17,12 +17,18 @@ import (
 type AgentService struct {
 	store agentRepository
 	state agentStateRepository
+	specs commandSpecsRepository
 	genID generatorID
 	log   *slog.Logger
 }
 
-func NewAgentService(logger *slog.Logger, storage agentRepository, state agentStateRepository) *AgentService {
-	return &AgentService{store: storage, log: logger, state: state}
+func NewAgentService(
+	logger *slog.Logger,
+	storage agentRepository,
+	state agentStateRepository,
+	specs commandSpecsRepository,
+) *AgentService {
+	return &AgentService{store: storage, log: logger, state: state, specs: specs, genID: uuid.NewV7}
 }
 
 // GetAll возращает всех агентов в хранилище.
@@ -62,6 +68,7 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 	return agentDB, nil
 }
 
+// Register сохраняет агента и спецификацию ее команд.
 func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
 	id, err := a.genID()
 	if err != nil {
@@ -72,6 +79,10 @@ func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent
 	agentDB, err := a.store.CreateAgent(ctx, newAgent)
 	if err != nil {
 		return nil, fmt.Errorf("create agent: %w", err)
+	}
+
+	if err = a.specs.SetCommandSpecs(ctx, agentDB.ID, agentReq.CommandSpecs); err != nil {
+		return nil, fmt.Errorf("save command specification: %w", err)
 	}
 
 	return agentDB, nil
@@ -104,7 +115,22 @@ func (a *AgentService) EditDescAgent(ctx context.Context, id uuid.UUID, newDesc 
 }
 
 // SetOnlineAgent меняет статус агента с offline на online.
-// Не проверяет существует ли агент.
+// Не проверяет, существует ли агент.
 func (a *AgentService) SetOnlineAgent(id uuid.UUID) {
 	a.state.SetOnline(id)
+}
+
+// GetCommandSpecs возвращает спецификацию команд агента.
+// Если спецификации не найдено возращает ErrAgentNotFound
+func (a *AgentService) GetCommandSpecs(ctx context.Context, agentID uuid.UUID) (models.CommandSpecs, error) {
+	specs, err := a.specs.GetCommandSpecs(ctx, agentID)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, ErrAgentNotFound
+		}
+
+		return nil, fmt.Errorf("get command specification: %w", err)
+	}
+
+	return specs, nil
 }

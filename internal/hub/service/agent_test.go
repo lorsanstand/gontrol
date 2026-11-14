@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
-	"math/rand/v2"
 	"testing"
 	"time"
 
@@ -19,7 +18,7 @@ import (
 )
 
 func newAgentServiceMock(storage agentRepository, state agentStateRepository) *AgentService {
-	return NewAgentService(&slog.Logger{}, storage, state)
+	return &AgentService{log: &slog.Logger{}, store: storage, state: state}
 }
 
 type genIDMock struct {
@@ -31,18 +30,11 @@ func (g genIDMock) gen() (uuid.UUID, error) {
 	return g.id, g.err
 }
 
-func TestAgentService_Get_Successful_Online(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
+func TestAgentService_Get(t *testing.T) {
 	id := uuid.New()
 	desc := "test_desc"
-	state := true
+	createdAt := time.Now()
+
 	agentDB := modelsHub.Agent{
 		ID:          id,
 		Name:        "test_name",
@@ -50,118 +42,88 @@ func TestAgentService_Get_Successful_Online(t *testing.T) {
 		Hostname:    "test_hostname",
 		Description: &desc,
 		State:       false,
-		CreatedAt:   time.Now(),
+		CreatedAt:   createdAt,
 	}
 
-	expected := modelsHub.Agent{
-		ID:          id,
-		Name:        agentDB.Name,
-		OS:          agentDB.OS,
-		Hostname:    agentDB.Hostname,
-		Description: agentDB.Description,
-		State:       state,
-		CreatedAt:   agentDB.CreatedAt,
+	expectedOnline := agentDB
+	expectedOnline.State = true
+
+	expectedOffline := agentDB
+	expectedOffline.State = false
+
+	tests := []struct {
+		name       string
+		expectErr  error
+		expected   *modelsHub.Agent
+		setupMocks func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository)
+	}{
+		{
+			name:      "successful online",
+			expectErr: nil,
+			expected:  &expectedOnline,
+			setupMocks: func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository) {
+				r.EXPECT().GetAgentByID(gomock.Any(), id).Return(&agentDB, nil).Times(1)
+				s.EXPECT().GetStatus(id).Return(true).Times(1)
+			},
+		},
+		{
+			name:      "successful offline",
+			expectErr: nil,
+			expected:  &expectedOffline,
+			setupMocks: func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository) {
+				r.EXPECT().GetAgentByID(gomock.Any(), id).Return(&agentDB, nil).Times(1)
+				s.EXPECT().GetStatus(id).Return(false).Times(1)
+			},
+		},
+		{
+			name:      "agent not found",
+			expectErr: ErrAgentNotFound,
+			expected:  nil,
+			setupMocks: func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository) {
+				r.EXPECT().GetAgentByID(gomock.Any(), id).Return(nil, store.ErrNotFound).Times(1)
+			},
+		},
+		{
+			name:      "unhandled error",
+			expectErr: sql.ErrConnDone,
+			expected:  nil,
+			setupMocks: func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository) {
+				r.EXPECT().GetAgentByID(gomock.Any(), id).Return(nil, sql.ErrConnDone).Times(1)
+			},
+		},
 	}
 
-	r.EXPECT().GetAgentByID(ctx, id).Return(&agentDB, nil).Times(1)
-	s.EXPECT().GetStatus(id).Return(state).Times(1)
-	agent, err := a.Get(ctx, id)
-	require.NoError(t, err)
-	require.Equal(t, expected, *agent)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+
+			a := newAgentServiceMock(r, s)
+			ctx := context.Background()
+
+			tt.setupMocks(r, s)
+
+			agent, err := a.Get(ctx, id)
+			require.ErrorIs(t, err, tt.expectErr)
+			require.Equal(t, tt.expected, agent)
+		})
+	}
 }
 
-func TestAgentService_Get_Successful_Offline(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.New()
+func TestAgentService_GetAll(t *testing.T) {
 	desc := "test_desc"
-	state := false
-	agentDB := modelsHub.Agent{
-		ID:          id,
-		Name:        "test_name",
-		OS:          "test_os",
-		Hostname:    "test_hostname",
-		Description: &desc,
-		State:       false,
-		CreatedAt:   time.Now(),
-	}
+	createdAt := time.Now()
 
-	expected := modelsHub.Agent{
-		ID:          id,
-		Name:        agentDB.Name,
-		OS:          agentDB.OS,
-		Hostname:    agentDB.Hostname,
-		Description: agentDB.Description,
-		State:       state,
-		CreatedAt:   agentDB.CreatedAt,
-	}
-
-	r.EXPECT().GetAgentByID(ctx, id).Return(&agentDB, nil).Times(1)
-	s.EXPECT().GetStatus(id).Return(state).Times(1)
-	agent, err := a.Get(ctx, id)
-	require.NoError(t, err)
-	require.Equal(t, expected, *agent)
-}
-
-func TestAgentService_Get_ErrAgentNotFound(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.New()
-
-	r.EXPECT().GetAgentByID(ctx, id).Return(nil, store.ErrNotFound).Times(1)
-	agent, err := a.Get(ctx, id)
-	require.ErrorIs(t, err, ErrAgentNotFound)
-	require.Nil(t, agent)
-}
-
-func TestAgentService_Get_UnhandledError(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.New()
-
-	r.EXPECT().GetAgentByID(ctx, id).Return(nil, sql.ErrConnDone).Times(1)
-	agent, err := a.Get(ctx, id)
-	require.Error(t, err)
-	require.Nil(t, agent)
-}
-
-func TestAgentService_GetAll_Successful(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	desc := "test_desc"
 	agentsDB := []modelsHub.Agent{
 		{
 			ID:          uuid.New(),
-			Name:        "test_name",
-			OS:          "test_os",
-			Hostname:    "test_hostname",
+			Name:        "test_name_1",
+			OS:          "test_os_1",
+			Hostname:    "test_hostname_1",
 			Description: &desc,
 			State:       false,
-			CreatedAt:   time.Now(),
+			CreatedAt:   createdAt,
 		},
 		{
 			ID:          uuid.New(),
@@ -170,84 +132,115 @@ func TestAgentService_GetAll_Successful(t *testing.T) {
 			Hostname:    "test_hostname_2",
 			Description: &desc,
 			State:       false,
-			CreatedAt:   time.Now(),
+			CreatedAt:   createdAt,
 		},
 	}
 
-	expecteds := make([]modelsHub.Agent, 0, len(agentsDB))
+	expectedAgents := []modelsHub.Agent{
+		agentsDB[0],
+		agentsDB[1],
+	}
+	expectedAgents[0].State = true
+	expectedAgents[1].State = false
 
-	for _, agentDB := range agentsDB {
-		//nolint:gosec // G404
-		state := rand.IntN(2) == 1
-
-		expected := modelsHub.Agent{
-			ID:          agentDB.ID,
-			Name:        agentDB.Name,
-			OS:          agentDB.OS,
-			Hostname:    agentDB.Hostname,
-			Description: agentDB.Description,
-			State:       state,
-			CreatedAt:   agentDB.CreatedAt,
-		}
-
-		s.EXPECT().GetStatus(expected.ID).Return(state).Times(1)
-
-		expecteds = append(expecteds, expected)
+	tests := []struct {
+		name       string
+		expectErr  error
+		expected   []modelsHub.Agent
+		setupMocks func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository)
+	}{
+		{
+			name:      "successful",
+			expectErr: nil,
+			expected:  expectedAgents,
+			setupMocks: func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository) {
+				r.EXPECT().GetAllAgents(gomock.Any()).Return(agentsDB, nil).Times(1)
+				s.EXPECT().GetStatus(expectedAgents[0].ID).Return(true).Times(1)
+				s.EXPECT().GetStatus(expectedAgents[1].ID).Return(false).Times(1)
+			},
+		},
+		{
+			name:      "unhandled error",
+			expectErr: sql.ErrConnDone,
+			expected:  nil,
+			setupMocks: func(r *mocks.MockagentRepository, s *mocks.MockagentStateRepository) {
+				r.EXPECT().GetAllAgents(gomock.Any()).Return(nil, sql.ErrConnDone).Times(1)
+			},
+		},
 	}
 
-	r.EXPECT().GetAllAgents(ctx).Return(agentsDB, nil).Times(1)
-	agent, err := a.GetAll(ctx)
-	require.NoError(t, err)
-	require.Equal(t, expecteds, agent)
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
 
-func TestAgentService_GetAll_UnhandledError(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
+			a := newAgentServiceMock(r, s)
+			ctx := context.Background()
 
-	a := newAgentServiceMock(r, s)
+			tt.setupMocks(r, s)
 
-	ctx := context.Background()
-
-	r.EXPECT().GetAllAgents(ctx).Return(nil, sql.ErrConnDone).Times(1)
-	agent, err := a.GetAll(ctx)
-	require.Error(t, err)
-	require.Nil(t, agent)
+			agents, err := a.GetAll(ctx)
+			require.ErrorIs(t, err, tt.expectErr)
+			require.Equal(t, tt.expected, agents)
+		})
+	}
 }
 
 func TestAgentService_SetOnlineAgent(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
 	id := uuid.New()
 
-	s.EXPECT().SetOnline(id).Times(1)
-	a.SetOnlineAgent(id)
-}
-
-func TestAgentService_Register_Successful(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	idMock := genIDMock{nil, id}
-
-	a := AgentService{
-		genID: idMock.gen,
-		state: s,
-		store: r,
-		log:   &slog.Logger{},
+	tests := []struct {
+		name       string
+		setupMocks func(s *mocks.MockagentStateRepository)
+	}{
+		{
+			name: "successful",
+			setupMocks: func(s *mocks.MockagentStateRepository) {
+				s.EXPECT().SetOnline(id).Times(1)
+			},
+		},
 	}
 
-	ctx := context.Background()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+
+			a := newAgentServiceMock(r, s)
+
+			tt.setupMocks(s)
+
+			a.SetOnlineAgent(id)
+		})
+	}
+}
+
+func TestAgentService_Register(t *testing.T) {
+	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
 	desc := "test_desc"
+	errTest := errors.New("test")
+	commands := models.CommandSpecs{
+		"test_command": models.CommandSpec{
+			Command: "test_command",
+			Args:    []models.ArgSpec{},
+			Label:   "test_label",
+		},
+	}
+
+	createAgent := models.CreateAgent{
+		Hostname:     "test_hostname",
+		OS:           "test_os",
+		CommandSpecs: commands,
+	}
+
+	createAgentDB := modelsHub.Agent{
+		ID:       id,
+		Hostname: createAgent.Hostname,
+		OS:       createAgent.OS,
+	}
+
 	agentDB := modelsHub.Agent{
 		ID:          id,
 		Name:        "test_name",
@@ -258,178 +251,242 @@ func TestAgentService_Register_Successful(t *testing.T) {
 		CreatedAt:   time.Now(),
 	}
 
-	createAgent := models.CreateAgent{Hostname: agentDB.Hostname, OS: agentDB.OS}
-	createAgentDB := modelsHub.Agent{ID: id, Hostname: agentDB.Hostname, OS: agentDB.OS}
+	expected := agentDB
 
-	expected := modelsHub.Agent{
-		ID:          id,
-		Name:        agentDB.Name,
-		OS:          agentDB.OS,
-		Hostname:    agentDB.Hostname,
-		Description: agentDB.Description,
-		State:       false,
-		CreatedAt:   agentDB.CreatedAt,
+	tests := []struct {
+		name       string
+		expectErr  error
+		expected   *modelsHub.Agent
+		genID      genIDMock
+		setupMocks func(r *mocks.MockagentRepository, c *mocks.MockcommandSpecsRepository)
+	}{
+		{
+			name:      "successful",
+			expectErr: nil,
+			expected:  &expected,
+			genID:     genIDMock{err: nil, id: id},
+			setupMocks: func(r *mocks.MockagentRepository, c *mocks.MockcommandSpecsRepository) {
+				r.EXPECT().CreateAgent(gomock.Any(), createAgentDB).Return(&agentDB, nil).Times(1)
+				c.EXPECT().SetCommandSpecs(gomock.Any(), createAgentDB.ID, commands).Return(nil)
+			},
+		},
+		{
+			name:      "error gen id",
+			expectErr: errTest,
+			expected:  nil,
+			genID:     genIDMock{err: errTest, id: id},
+			setupMocks: func(r *mocks.MockagentRepository, c *mocks.MockcommandSpecsRepository) {
+			},
+		},
+		{
+			name:      "error create agent in repo",
+			expectErr: errTest,
+			expected:  nil,
+			genID:     genIDMock{err: nil, id: id},
+			setupMocks: func(r *mocks.MockagentRepository, c *mocks.MockcommandSpecsRepository) {
+				r.EXPECT().CreateAgent(gomock.Any(), createAgentDB).Return(nil, errTest).Times(1)
+			},
+		},
+		{
+			name:      "error save command specification in repo",
+			expectErr: errTest,
+			expected:  nil,
+			genID:     genIDMock{err: nil, id: id},
+			setupMocks: func(r *mocks.MockagentRepository, c *mocks.MockcommandSpecsRepository) {
+				r.EXPECT().CreateAgent(gomock.Any(), createAgentDB).Return(&agentDB, nil).Times(1)
+				c.EXPECT().SetCommandSpecs(gomock.Any(), createAgentDB.ID, commands).Return(errTest)
+			},
+		},
 	}
 
-	r.EXPECT().CreateAgent(ctx, createAgentDB).Return(&agentDB, nil).Times(1)
-	agent, err := a.Register(ctx, createAgent)
-	require.NoError(t, err)
-	require.Equal(t, expected, *agent)
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+			c := mocks.NewMockcommandSpecsRepository(ctl)
 
-func TestAgentService_Register_ErrGenID(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
+			a := AgentService{
+				genID: tt.genID.gen,
+				state: s,
+				store: r,
+				log:   &slog.Logger{},
+				specs: c,
+			}
 
-	errTest := errors.New("test")
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	idMock := genIDMock{errTest, id}
+			ctx := context.Background()
 
-	a := AgentService{
-		genID: idMock.gen,
-		state: s,
-		store: r,
-		log:   &slog.Logger{},
+			tt.setupMocks(r, c)
+
+			agent, err := a.Register(ctx, createAgent)
+			require.ErrorIs(t, err, tt.expectErr)
+			require.Equal(t, tt.expected, agent)
+		})
 	}
-
-	ctx := context.Background()
-	createAgent := models.CreateAgent{Hostname: "test_hostname", OS: "test_os"}
-
-	agent, err := a.Register(ctx, createAgent)
-	require.ErrorIs(t, err, errTest)
-	require.Nil(t, agent)
 }
 
-func TestAgentService_Register_ErrCreateAgentInRepo(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	idMock := genIDMock{nil, id}
-
-	a := AgentService{
-		genID: idMock.gen,
-		state: s,
-		store: r,
-		log:   &slog.Logger{},
-	}
-
-	errTest := errors.New("test")
-
-	ctx := context.Background()
-	createAgent := models.CreateAgent{Hostname: "test_hostname", OS: "test_os"}
-	createAgentDB := modelsHub.Agent{ID: id, Hostname: createAgent.Hostname, OS: createAgent.OS}
-
-	r.EXPECT().CreateAgent(ctx, createAgentDB).Return(nil, errTest).Times(1)
-	agent, err := a.Register(ctx, createAgent)
-	require.ErrorIs(t, err, errTest)
-	require.Nil(t, agent)
-}
-
-func TestAgentService_EditNameAgent_Successful(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	name := "name_test"
-
-	r.EXPECT().EditNameByID(ctx, id, name).Return(nil).Times(1)
-	err := a.EditNameAgent(ctx, id, name)
-	require.NoError(t, err)
-}
-
-func TestAgentService_EditNameAgent_ErrNotFound(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	name := "name_test"
-
-	r.EXPECT().EditNameByID(ctx, id, name).Return(store.ErrChangeData).Times(1)
-	err := a.EditNameAgent(ctx, id, name)
-	require.ErrorIs(t, err, ErrAgentNotFound)
-}
-
-func TestAgentService_EditNameAgent_UnhandledError(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
+func TestAgentService_EditNameAgent(t *testing.T) {
 	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
 	name := "name_test"
 	errTest := errors.New("test")
 
-	r.EXPECT().EditNameByID(ctx, id, name).Return(errTest).Times(1)
-	err := a.EditNameAgent(ctx, id, name)
-	require.ErrorIs(t, err, errTest)
+	tests := []struct {
+		name       string
+		expectErr  error
+		setupMocks func(r *mocks.MockagentRepository)
+	}{
+		{
+			name:      "successful",
+			expectErr: nil,
+			setupMocks: func(r *mocks.MockagentRepository) {
+				r.EXPECT().EditNameByID(gomock.Any(), id, name).Return(nil).Times(1)
+			},
+		},
+		{
+			name:      "error agent not found",
+			expectErr: ErrAgentNotFound,
+			setupMocks: func(r *mocks.MockagentRepository) {
+				r.EXPECT().EditNameByID(gomock.Any(), id, name).Return(store.ErrChangeData).Times(1)
+			},
+		},
+		{
+			name:      "unhandled error",
+			expectErr: errTest,
+			setupMocks: func(r *mocks.MockagentRepository) {
+				r.EXPECT().EditNameByID(gomock.Any(), id, name).Return(errTest).Times(1)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+
+			a := newAgentServiceMock(r, s)
+			ctx := context.Background()
+
+			tt.setupMocks(r)
+
+			err := a.EditNameAgent(ctx, id, name)
+			require.ErrorIs(t, err, tt.expectErr)
+		})
+	}
 }
 
-func TestAgentService_EditDescAgent_Successful(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	desc := "desc_test"
-
-	r.EXPECT().EditDescByID(ctx, id, desc).Return(nil).Times(1)
-	err := a.EditDescAgent(ctx, id, desc)
-	require.NoError(t, err)
-}
-
-func TestAgentService_EditDescAgent_ErrAgentNotFound(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
-	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
-	desc := "desc_test"
-
-	r.EXPECT().EditDescByID(ctx, id, desc).Return(store.ErrChangeData).Times(1)
-	err := a.EditDescAgent(ctx, id, desc)
-	require.ErrorIs(t, err, ErrAgentNotFound)
-}
-
-func TestAgentService_EditDescAgent_UnhandledError(t *testing.T) {
-	ctl := gomock.NewController(t)
-	r := mocks.NewMockagentRepository(ctl)
-	s := mocks.NewMockagentStateRepository(ctl)
-	defer ctl.Finish()
-
-	a := newAgentServiceMock(r, s)
-
-	ctx := context.Background()
+func TestAgentService_EditDescAgent(t *testing.T) {
 	id := uuid.MustParse("018f3a3b-3a0b-7123-8456-426614174000")
 	desc := "desc_test"
 	errTest := errors.New("test")
 
-	r.EXPECT().EditDescByID(ctx, id, desc).Return(errTest).Times(1)
-	err := a.EditDescAgent(ctx, id, desc)
-	require.ErrorIs(t, err, errTest)
+	tests := []struct {
+		name       string
+		expectErr  error
+		setupMocks func(r *mocks.MockagentRepository)
+	}{
+		{
+			name:      "successful",
+			expectErr: nil,
+			setupMocks: func(r *mocks.MockagentRepository) {
+				r.EXPECT().EditDescByID(gomock.Any(), id, desc).Return(nil).Times(1)
+			},
+		},
+		{
+			name:      "error agent not found",
+			expectErr: ErrAgentNotFound,
+			setupMocks: func(r *mocks.MockagentRepository) {
+				r.EXPECT().EditDescByID(gomock.Any(), id, desc).Return(store.ErrChangeData).Times(1)
+			},
+		},
+		{
+			name:      "unhandled error",
+			expectErr: errTest,
+			setupMocks: func(r *mocks.MockagentRepository) {
+				r.EXPECT().EditDescByID(gomock.Any(), id, desc).Return(errTest).Times(1)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+
+			a := newAgentServiceMock(r, s)
+			ctx := context.Background()
+
+			tt.setupMocks(r)
+
+			err := a.EditDescAgent(ctx, id, desc)
+			require.ErrorIs(t, err, tt.expectErr)
+		})
+	}
+}
+
+func TestAgentService_GetCommandSpecs(t *testing.T) {
+	id := uuid.New()
+	commands := models.CommandSpecs{
+		"test_command": models.CommandSpec{
+			Command: "test_command",
+			Args:    []models.ArgSpec{},
+			Label:   "test_label",
+		},
+	}
+
+	tests := []struct {
+		name       string
+		expectErr  error
+		expected   models.CommandSpecs
+		setupMocks func(s *mocks.MockcommandSpecsRepository)
+	}{
+		{
+			name:      "successful",
+			expectErr: nil,
+			expected:  commands,
+			setupMocks: func(s *mocks.MockcommandSpecsRepository) {
+				s.EXPECT().GetCommandSpecs(gomock.Any(), id).Return(commands, nil).Times(1)
+			},
+		},
+		{
+			name:      "error not found",
+			expectErr: ErrAgentNotFound,
+			expected:  nil,
+			setupMocks: func(s *mocks.MockcommandSpecsRepository) {
+				s.EXPECT().GetCommandSpecs(gomock.Any(), id).Return(models.CommandSpecs{}, store.ErrNotFound).Times(1)
+			},
+		},
+		{
+			name:      "unhandled error",
+			expectErr: sql.ErrConnDone,
+			expected:  nil,
+			setupMocks: func(s *mocks.MockcommandSpecsRepository) {
+				s.EXPECT().GetCommandSpecs(gomock.Any(), id).Return(models.CommandSpecs{}, sql.ErrConnDone).Times(1)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctl := gomock.NewController(t)
+			r := mocks.NewMockagentRepository(ctl)
+			s := mocks.NewMockagentStateRepository(ctl)
+			c := mocks.NewMockcommandSpecsRepository(ctl)
+
+			a := AgentService{
+				state: s,
+				store: r,
+				log:   &slog.Logger{},
+				specs: c,
+			}
+			ctx := context.Background()
+
+			tt.setupMocks(c)
+
+			agent, err := a.GetCommandSpecs(ctx, id)
+			require.ErrorIs(t, err, tt.expectErr)
+			require.Equal(t, tt.expected, agent)
+		})
+	}
 }

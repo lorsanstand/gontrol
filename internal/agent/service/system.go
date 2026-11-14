@@ -15,7 +15,7 @@ type System struct {
 	cfg   *config.Config
 }
 
-// Init Иницилизрует System.
+// SystemInit Иницилизирует System.
 // При создании берет данные о системе.
 func SystemInit(cfg *config.Config) (*System, error) {
 	hostname, err := os.Hostname()

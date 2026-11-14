@@ -1,10 +1,15 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 type CreateAgent struct {
-	OS       string `json:"OS"`
-	Hostname string `json:"hostname"`
+	OS           string       `json:"OS"`
+	Hostname     string       `json:"hostname"`
+	CommandSpecs CommandSpecs `json:"command_specs"`
 }
 
 type Agent struct {
@@ -14,9 +19,9 @@ type Agent struct {
 }
 
 type Task struct {
-	ID      uuid.UUID         `json:"id"`
-	Command string            `json:"command"`
-	Args    map[string]string `json:"args"`
+	ID      uuid.UUID                  `json:"id"`
+	Command string                     `json:"command"`
+	Args    map[string]json.RawMessage `json:"args"`
 }
 
 type TaskResult struct {
