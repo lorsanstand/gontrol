@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: 127.0.0.1:8089/api/v1/tasks/runner/:id
+  url: 127.0.0.1:8089/api/v1/tasks/agent/:id
   params:
     - name: id
-      value: 01a1d078-3627-7192-b520-832ca0f72f23
+      value: 01a1da7f-ae61-7a66-b964-a350946b62ca
       type: path
   auth: inherit
 
