@@ -151,6 +151,11 @@ func (a *AgentHandler) PostRegisterAgent(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if err = a.validator.StructCtx(ctx, createAgent); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	agent, err := a.agent.Register(ctx, createAgent)
 	if err != nil {
 		ReturnErrors(w, "error create agent", err)

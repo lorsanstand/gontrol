@@ -61,6 +61,11 @@ func (t *TaskHandler) PostResultTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = t.validator.StructCtx(ctx, taskResult); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	err = t.task.SaveResult(ctx, taskResult.ID, taskResult.Result, taskResult.TimeExecMS)
 	if err != nil {
 		ReturnErrors(w, "error save task result", err)
