@@ -56,7 +56,7 @@ type Task struct {
 }
 
 type CreateTask struct {
-	AgentID uuid.UUID                  `json:"agent_id"`
-	Command string                     `json:"command"`
-	Args    map[string]json.RawMessage `json:"args"`
+	AgentID uuid.UUID                  `json:"agent_id" validate:"required,uuid7"`
+	Command string                     `json:"command" validate:"required,min=1,max=30"`
+	Args    map[string]json.RawMessage `json:"args,omitempty" validate:"dive,keys,min=1,max=30,endkeys"`
 }

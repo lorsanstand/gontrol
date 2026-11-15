@@ -17,9 +17,9 @@ type Agent struct {
 }
 
 type EditNameAgent struct {
-	Name string `json:"Name"`
+	Name string `json:"Name" validate:"required,min=3,max=30"`
 }
 
 type EditDescAgent struct {
-	Description string `json:"description"`
+	Description string `json:"description" validate:"required,min=1,max=300"`
 }
