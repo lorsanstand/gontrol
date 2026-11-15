@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
@@ -74,9 +75,7 @@ func (a *AgentHandler) PatchEditName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := struct {
-		Name string `json:"Name"`
-	}{}
+	var body modelsHub.EditNameAgent
 	defer r.Body.Close()
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
@@ -111,9 +110,7 @@ func (a *AgentHandler) PatchEditDesc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := struct {
-		Description string `json:"description"`
-	}{}
+	var body modelsHub.EditDescAgent
 	defer r.Body.Close()
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
