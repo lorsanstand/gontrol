@@ -31,9 +31,9 @@ func RegisterRoutes(
 	agentRouter.Get("/{id}", agentHandler.GetAgent)
 	agentRouter.Get("/", agentHandler.GetAllAgents)
 	agentRouter.Get("/{id}/commands", agentHandler.GetCommandSpecs)
-	agentRouter.Patch("/{id}/name", agentHandler.EditName)
-	agentRouter.Patch("/{id}/description", agentHandler.EditDesc)
-	agentRouter.Post("/register", agentHandler.RegisterAgent)
+	agentRouter.Patch("/{id}/name", agentHandler.PatchEditName)
+	agentRouter.Patch("/{id}/description", agentHandler.PatchEditDesc)
+	agentRouter.Post("/register", agentHandler.PostRegisterAgent)
 
 	mux.Mount("/tasks", taskRouter)
 	mux.Mount("/agents", agentRouter)

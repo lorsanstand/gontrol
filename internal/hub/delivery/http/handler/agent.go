@@ -57,7 +57,7 @@ func (a *AgentHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, agent, http.StatusOK)
 }
 
-func (a *AgentHandler) EditName(w http.ResponseWriter, r *http.Request) {
+func (a *AgentHandler) PatchEditName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	agentID := r.PathValue("id")
@@ -94,7 +94,7 @@ func (a *AgentHandler) EditName(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
+func (a *AgentHandler) PatchEditDesc(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	agentID := r.PathValue("id")
@@ -131,7 +131,7 @@ func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a *AgentHandler) RegisterAgent(w http.ResponseWriter, r *http.Request) {
+func (a *AgentHandler) PostRegisterAgent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var createAgent models.CreateAgent
 
