@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
@@ -13,12 +14,13 @@ import (
 )
 
 type AgentHandler struct {
-	log   *slog.Logger
-	agent *service.AgentService
+	log       *slog.Logger
+	agent     *service.AgentService
+	validator *validator.Validate
 }
 
 func NewAgentHandler(logger *slog.Logger, store *service.AgentService) *AgentHandler {
-	return &AgentHandler{agent: store, log: logger}
+	return &AgentHandler{agent: store, log: logger, validator: validator.New()}
 }
 
 func (a *AgentHandler) GetAllAgents(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +86,11 @@ func (a *AgentHandler) PatchEditName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = a.validator.StructCtx(ctx, body); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	err = a.agent.EditNameAgent(ctx, id, body.Name)
 	if err != nil {
 		ReturnErrors(w, "error edit name agent", err)
@@ -116,6 +123,11 @@ func (a *AgentHandler) PatchEditDesc(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if err = a.validator.StructCtx(ctx, body); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

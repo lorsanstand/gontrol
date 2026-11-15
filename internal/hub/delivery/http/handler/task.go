@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
@@ -13,12 +14,13 @@ import (
 )
 
 type TaskHandler struct {
-	log  *slog.Logger
-	task *service.TaskService
+	log       *slog.Logger
+	task      *service.TaskService
+	validator *validator.Validate
 }
 
 func NewTaskHandler(logger *slog.Logger, task *service.TaskService) *TaskHandler {
-	return &TaskHandler{task: task, log: logger}
+	return &TaskHandler{task: task, log: logger, validator: validator.New()}
 }
 
 func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +32,11 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		t.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if err = t.validator.StructCtx(ctx, taskRequest); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -82,6 +89,7 @@ func (t *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	task, err := t.task.GetByID(ctx, id)
 	if err != nil {
 		ReturnErrors(w, "error get task", err)
+		return
 	}
 
 	utils.WriteJSON(w, task, http.StatusOK)
@@ -106,6 +114,7 @@ func (t *TaskHandler) GetTaskByAgentID(w http.ResponseWriter, r *http.Request) {
 	tasks, err := t.task.GetByAgentID(ctx, id)
 	if err != nil {
 		ReturnErrors(w, "error get task", err)
+		return
 	}
 
 	utils.WriteJSON(w, tasks, http.StatusOK)
