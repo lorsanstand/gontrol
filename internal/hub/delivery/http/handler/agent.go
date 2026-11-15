@@ -5,19 +5,22 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-playground/validator"
 	"github.com/google/uuid"
+	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
 type AgentHandler struct {
-	log   *slog.Logger
-	agent *service.AgentService
+	log       *slog.Logger
+	agent     *service.AgentService
+	validator *validator.Validate
 }
 
 func NewAgentHandler(logger *slog.Logger, store *service.AgentService) *AgentHandler {
-	return &AgentHandler{agent: store, log: logger}
+	return &AgentHandler{agent: store, log: logger, validator: validator.New()}
 }
 
 func (a *AgentHandler) GetAllAgents(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +60,7 @@ func (a *AgentHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, agent, http.StatusOK)
 }
 
-func (a *AgentHandler) EditName(w http.ResponseWriter, r *http.Request) {
+func (a *AgentHandler) PatchEditName(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	agentID := r.PathValue("id")
@@ -74,14 +77,17 @@ func (a *AgentHandler) EditName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := struct {
-		Name string `json:"Name"`
-	}{}
+	var body modelsHub.EditNameAgent
 	defer r.Body.Close()
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		a.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if err = a.validator.StructCtx(ctx, body); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -94,7 +100,7 @@ func (a *AgentHandler) EditName(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
+func (a *AgentHandler) PatchEditDesc(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	agentID := r.PathValue("id")
@@ -111,14 +117,17 @@ func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := struct {
-		Description string `json:"description"`
-	}{}
+	var body modelsHub.EditDescAgent
 	defer r.Body.Close()
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		a.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if err = a.validator.StructCtx(ctx, body); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -131,7 +140,7 @@ func (a *AgentHandler) EditDesc(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a *AgentHandler) RegisterAgent(w http.ResponseWriter, r *http.Request) {
+func (a *AgentHandler) PostRegisterAgent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var createAgent models.CreateAgent
 
@@ -139,6 +148,11 @@ func (a *AgentHandler) RegisterAgent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.log.Debug("invalid json", slog.Any("error", err))
 		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if err = a.validator.StructCtx(ctx, createAgent); err != nil {
+		utils.WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

@@ -15,3 +15,11 @@ type Agent struct {
 	State       bool      `json:"state"`
 	CreatedAt   time.Time `json:"created_at"`
 }
+
+type EditNameAgent struct {
+	Name string `json:"Name" validate:"required,min=3,max=30"`
+}
+
+type EditDescAgent struct {
+	Description string `json:"description" validate:"required,min=1,max=300"`
+}
