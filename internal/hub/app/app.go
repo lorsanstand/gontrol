@@ -1,4 +1,4 @@
-package hub
+package app
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/lorsanstand/gontrol/internal/hub"
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	deliveryHttp "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/middlewares"
@@ -58,7 +59,7 @@ func (a *App) Run() int {
 	taskRepo := postgres.NewTaskRepository(db)
 	specsRepo := postgres.NewCommandSpecsRepository(db)
 
-	agentStateRepo := in_memory.NewAgentStateStore(TimeTTLOnlineAgent)
+	agentStateRepo := in_memory.NewAgentStateStore(hub.TimeTTLOnlineAgent)
 	go func() {
 		err = agentStateRepo.AutoCleaner(ctx)
 		a.logger.Warn("auto cleaner state store stopped", slog.Any("error", err))
