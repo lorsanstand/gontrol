@@ -38,7 +38,7 @@ type DI struct {
 	taskHandlers      *handler.TaskHandler
 	heartbeatHandlers *handler.HeartbeatHandler
 
-	apiRouter *chi.Mux
+	apiRouter  *chi.Mux
 	httpServer *http.Server
 }
 
