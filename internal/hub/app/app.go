@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lorsanstand/gontrol/internal/migrator"
 	"github.com/lorsanstand/gontrol/migrations"
@@ -19,9 +22,10 @@ func NewApp() *App {
 }
 
 func (a *App) Run() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	logger := a.di.GetLogger()
+	cfg := a.di.GetCfg()
 
 	logger.Info("starting gontrol-hub...")
 
@@ -36,10 +40,30 @@ func (a *App) Run() {
 
 	srv := a.di.GetHttpServer()
 
-	if err := srv.ListenAndServe(); err != nil {
-		logger.Info("server stopped", slog.Any("error", err))
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			logger.Error("server error", slog.Any("error", err))
+		}
+	}()
+
+	logger.Info("gontrol-hub is running", slog.String("address", fmt.Sprintf("0.0.0.0:%s", cfg.Port)))
+
+	<-ctx.Done()
+	logger.Info("signal received, closing...")
+
+	// Для повторного нажатия CTRL+C
+	stop()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer shutdownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("error server stopped", slog.Any("error", err))
 	}
 
+	logger.Info("server stop")
+
+	defer a.di.GetDB().Close()
 }
 
 func (a *App) applyMigrations() error {
