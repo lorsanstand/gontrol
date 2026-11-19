@@ -22,6 +22,7 @@ func NewApp() *App {
 }
 
 func (a *App) Run() {
+	// Ловим сигнал от системы.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	logger := a.di.GetLogger()
@@ -29,17 +30,24 @@ func (a *App) Run() {
 
 	logger.Info("starting gontrol-hub...")
 
+	// Запускаем миграции.
 	if err := a.applyMigrations(); err != nil {
 		logger.Error("failed to apply migrations", slog.Any("error", err))
 	}
+	
+	// Запускаем AutoCleaner в AgentStateRepo.
 	go func() {
 		stateRepo := a.di.GetAgentStateRepo()
 		err := stateRepo.AutoCleaner(ctx)
 		logger.Warn("auto cleaner state store stopped", slog.Any("error", err))
 	}()
 
+	// Закрываем базу данных в конце.
+	defer a.di.GetDB().Close()
+
 	srv := a.di.GetHttpServer()
 
+	// Запускаем сервер.
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			logger.Error("server error", slog.Any("error", err))
@@ -48,22 +56,22 @@ func (a *App) Run() {
 
 	logger.Info("gontrol-hub is running", slog.String("address", fmt.Sprintf("0.0.0.0:%s", cfg.Port)))
 
+	// Делаем паузу, пока не получим сигнал от системы.
 	<-ctx.Done()
 	logger.Info("signal received, closing...")
 
-	// Для повторного нажатия CTRL+C
+	// Для повторного нажатия CTRL+C моментальное выключение.
 	stop()
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer shutdownCancel()
 
+	// Запускаем graceful shutdown в http сервере.
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("error server stopped", slog.Any("error", err))
 	}
 
 	logger.Info("server stop")
-
-	defer a.di.GetDB().Close()
 }
 
 func (a *App) applyMigrations() error {
