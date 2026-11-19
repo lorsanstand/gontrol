@@ -3,8 +3,13 @@ package app
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/lorsanstand/gontrol/internal/migrator"
 	"github.com/lorsanstand/gontrol/migrations"
@@ -19,27 +24,56 @@ func NewApp() *App {
 }
 
 func (a *App) Run() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// Ловим сигнал от системы.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	logger := a.di.GetLogger()
+	cfg := a.di.GetCfg()
 
 	logger.Info("starting gontrol-hub...")
 
+	// Запускаем миграции.
 	if err := a.applyMigrations(); err != nil {
 		logger.Error("failed to apply migrations", slog.Any("error", err))
 	}
+
+	// Запускаем AutoCleaner в AgentStateRepo.
 	go func() {
 		stateRepo := a.di.GetAgentStateRepo()
 		err := stateRepo.AutoCleaner(ctx)
 		logger.Warn("auto cleaner state store stopped", slog.Any("error", err))
 	}()
 
+	// Закрываем базу данных в конце.
+	defer a.di.GetDB().Close()
+
 	srv := a.di.GetHttpServer()
 
-	if err := srv.ListenAndServe(); err != nil {
-		logger.Info("server stopped", slog.Any("error", err))
+	// Запускаем сервер.
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("server error", slog.Any("error", err))
+		}
+	}()
+
+	logger.Info("gontrol-hub is running", slog.String("address", fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
+
+	// Делаем паузу, пока не получим сигнал от системы.
+	<-ctx.Done()
+	logger.Info("signal received, closing...")
+
+	// Для повторного нажатия CTRL+C моментальное выключение.
+	stop()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer shutdownCancel()
+
+	// Запускаем graceful shutdown в http сервере.
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("error server stopped", slog.Any("error", err))
 	}
 
+	logger.Info("server stop")
 }
 
 func (a *App) applyMigrations() error {
