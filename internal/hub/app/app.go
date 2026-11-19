@@ -36,7 +36,7 @@ func (a *App) Run() {
 	if err := a.applyMigrations(); err != nil {
 		logger.Error("failed to apply migrations", slog.Any("error", err))
 	}
-	
+
 	// Запускаем AutoCleaner в AgentStateRepo.
 	go func() {
 		stateRepo := a.di.GetAgentStateRepo()
