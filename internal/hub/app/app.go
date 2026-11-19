@@ -3,8 +3,10 @@ package app
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
@@ -49,12 +51,12 @@ func (a *App) Run() {
 
 	// Запускаем сервер.
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error("server error", slog.Any("error", err))
 		}
 	}()
 
-	logger.Info("gontrol-hub is running", slog.String("address", fmt.Sprintf("0.0.0.0:%s", cfg.Port)))
+	logger.Info("gontrol-hub is running", slog.String("address", fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
 
 	// Делаем паузу, пока не получим сигнал от системы.
 	<-ctx.Done()
