@@ -29,4 +29,5 @@ create-migrate:
 
 gen:
 	sqlc generate
+	buf generate
 	go generate ./...

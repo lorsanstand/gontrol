@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package proto.v1;
+
+option go_package = "github.com/lorsanstand/gontrol/gen/proto/v1;protov1";
+
+service HubAgentService {
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+  rpc SendHeartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc SendTaskResult(TaskResultRequest) returns (TaskResultResponse);
+}
+
+message RegisterAgentRequest {
+  string os = 1;
+  string hostname = 2;
+  repeated CommandSpec command_specs = 3;
+}
+
+message CommandSpec {
+  string command = 1;
+  string label = 2;
+  repeated ArgSpec args = 3;
+}
+
+message ArgSpec {
+  string name = 1;
+  string label = 2;
+  string type = 3;
+  bool required = 4;
+  string placeholder = 5;
+
+  optional int64 min = 6;
+  optional int64 max = 7;
+  optional int64 min_length = 8;
+  optional int64 max_length = 9;
+  repeated string enum = 10;
+}
+
+message RegisterAgentResponse {
+  string id = 1;
+  int64 heartbeat_ttl = 2;
+}
+
+message HeartbeatRequest {
+  string id = 1;
+}
+
+message HeartbeatResponse {
+  string id = 1;
+  optional Task task = 2;
+}
+
+message TaskResultRequest {
+  string id = 1;
+  int64 time_exec_ms = 2;
+  bytes result = 3;
+}
+
+message Task {
+  string id = 1;
+  string command = 2;
+  map<string, bytes> args = 3;
+}
+
+message TaskResultResponse {
+
+}
