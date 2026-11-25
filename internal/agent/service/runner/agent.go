@@ -24,13 +24,13 @@ func NewAgentRunner(log *slog.Logger, tasker *executor.TaskExecutor, hub *servic
 
 // Serve блокирующая функция, которая отсылает heartbeat и отправляет задачи на выполнение.
 func (a *AgentRunner) Serve(ctx context.Context) error {
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
 	agent, err := a.RegisterOrUpdate(ctx)
 	if err != nil {
 		return fmt.Errorf("register or update runner: %w", err)
 	}
+
+	ticker := time.NewTicker(agent.HeartbeatTTL)
+	defer ticker.Stop()
 
 	hb := models.HeartbeatRequest{AgentID: agent.ID}
 

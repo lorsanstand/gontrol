@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/lorsanstand/gontrol/internal/hub"
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
@@ -42,9 +43,10 @@ func (a *AgentRunner) register(ctx context.Context) (*models.RegisterAgentRespon
 }
 
 // update обновляет данные об агенте.
-// На будущее когда появится обновление агента через ручку
+// TODO: Добавить ручку обновления агента
 func (a *AgentRunner) update(ctx context.Context) (*models.RegisterAgentResponse, error) {
-	return &models.RegisterAgentResponse{ID: *a.system.GetAgentID()}, nil
+	// TODO: ИСПРАВИТЬ, КОГДА ДОБАВИМ РУЧКУ ОБНОВЛЕНИЯ АГЕНТА
+	return &models.RegisterAgentResponse{ID: *a.system.GetAgentID(), HeartbeatTTL: hub.TimeSendHeartbeat * time.Second}, nil
 }
 
 // Написать обработку ошибки если запрос не <=500, что бы избежать бесконечного update.
