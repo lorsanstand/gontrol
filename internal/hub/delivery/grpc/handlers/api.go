@@ -16,6 +16,7 @@ import (
 )
 
 type ServerAPI struct {
+	protov1.UnimplementedHubAgentServiceServer
 	log       *slog.Logger
 	task      *service.TaskService
 	hb        *service.HeartbeatService
