@@ -69,7 +69,7 @@ func (a *AgentService) Get(ctx context.Context, id uuid.UUID) (*modelsHub.Agent,
 }
 
 // Register сохраняет агента и спецификацию ее команд.
-func (a *AgentService) Register(ctx context.Context, agentReq models.CreateAgent) (*modelsHub.Agent, error) {
+func (a *AgentService) Register(ctx context.Context, agentReq models.RegisterAgentRequest) (*modelsHub.Agent, error) {
 	id, err := a.genID()
 	if err != nil {
 		return nil, fmt.Errorf("generate id: %w", err)

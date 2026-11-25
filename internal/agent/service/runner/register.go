@@ -10,7 +10,7 @@ import (
 )
 
 // RegisterOrUpdate Является блокирующей функцией пока агент не обновится или не зарегистрируется.
-func (a *AgentRunner) RegisterOrUpdate(ctx context.Context) (*models.Agent, error) {
+func (a *AgentRunner) RegisterOrUpdate(ctx context.Context) (*models.RegisterAgentResponse, error) {
 	if a.system.GetAgentID() != nil {
 		return a.retry(ctx, a.update, "update runner failed")
 	}
@@ -19,11 +19,11 @@ func (a *AgentRunner) RegisterOrUpdate(ctx context.Context) (*models.Agent, erro
 }
 
 // register регистрирует агента и сохраняет AgentID.
-func (a *AgentRunner) register(ctx context.Context) (*models.Agent, error) {
+func (a *AgentRunner) register(ctx context.Context) (*models.RegisterAgentResponse, error) {
 	systemSpecs := a.system.GetSpecs()
 	commandSpecs := a.taskExec.GetCommands()
 
-	create := models.CreateAgent{
+	create := models.RegisterAgentRequest{
 		OS:           systemSpecs.OS,
 		Hostname:     systemSpecs.Hostname,
 		CommandSpecs: commandSpecs,
@@ -43,17 +43,15 @@ func (a *AgentRunner) register(ctx context.Context) (*models.Agent, error) {
 
 // update обновляет данные об агенте.
 // На будущее когда появится обновление агента через ручку
-func (a *AgentRunner) update(ctx context.Context) (*models.Agent, error) {
-	specs := a.system.GetSpecs()
-
-	return &models.Agent{ID: *a.system.GetAgentID(), OS: specs.OS, Hostname: specs.Hostname}, nil
+func (a *AgentRunner) update(ctx context.Context) (*models.RegisterAgentResponse, error) {
+	return &models.RegisterAgentResponse{ID: *a.system.GetAgentID()}, nil
 }
 
 // Написать обработку ошибки если запрос не <=500, что бы избежать бесконечного update.
 func (a *AgentRunner) retry(
 	ctx context.Context,
-	f func(ctx context.Context) (*models.Agent, error),
-	msg string) (*models.Agent, error) {
+	f func(ctx context.Context) (*models.RegisterAgentResponse, error),
+	msg string) (*models.RegisterAgentResponse, error) {
 
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()

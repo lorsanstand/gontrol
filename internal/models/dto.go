@@ -2,20 +2,20 @@ package models
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-type CreateAgent struct {
+type RegisterAgentRequest struct {
 	OS           string       `json:"OS" validate:"required,max=10"`
 	Hostname     string       `json:"hostname" validate:"required,max=30,hostname"`
 	CommandSpecs CommandSpecs `json:"command_specs" validate:"required"`
 }
 
-type Agent struct {
-	ID       uuid.UUID `json:"id"`
-	OS       string    `json:"OS"`
-	Hostname string    `json:"hostname"`
+type RegisterAgentResponse struct {
+	ID           uuid.UUID     `json:"id"`
+	HeartbeatTTL time.Duration `json:"heartbeat_ttl"`
 }
 
 type Task struct {
@@ -31,9 +31,7 @@ type TaskResult struct {
 }
 
 type HeartbeatRequest struct {
-	AgentID  uuid.UUID `json:"agent_id" validate:"required,uuid7"`
-	Hostname string    `json:"hostname" validate:"required,max=30,hostname"`
-	OS       string    `json:"OS" validate:"required,max=10"`
+	AgentID uuid.UUID `json:"agent_id" validate:"required,uuid7"`
 }
 
 type HeartbeatResponse struct {

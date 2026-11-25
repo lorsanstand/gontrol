@@ -229,7 +229,7 @@ func TestAgentService_Register(t *testing.T) {
 		},
 	}
 
-	createAgent := models.CreateAgent{
+	createAgent := models.RegisterAgentRequest{
 		Hostname:     "test_hostname",
 		OS:           "test_os",
 		CommandSpecs: commands,

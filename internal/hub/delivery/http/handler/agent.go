@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
+	"github.com/lorsanstand/gontrol/internal/hub"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/models"
@@ -142,7 +144,7 @@ func (a *AgentHandler) PatchEditDesc(w http.ResponseWriter, r *http.Request) {
 
 func (a *AgentHandler) PostRegisterAgent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var createAgent models.CreateAgent
+	var createAgent models.RegisterAgentRequest
 
 	err := json.NewDecoder(r.Body).Decode(&createAgent)
 	if err != nil {
@@ -162,7 +164,7 @@ func (a *AgentHandler) PostRegisterAgent(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	newAgent := models.Agent{ID: agent.ID, Hostname: agent.Hostname, OS: agent.OS}
+	newAgent := models.RegisterAgentResponse{ID: agent.ID, HeartbeatTTL: hub.TimeSendHeartbeat * time.Second}
 
 	utils.WriteJSON(w, newAgent, http.StatusCreated)
 }

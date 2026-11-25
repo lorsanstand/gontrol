@@ -93,7 +93,7 @@ func (h *HubClient) SendTaskResult(ctx context.Context, taskResult models.TaskRe
 
 // RegisterAgent регистрирует агента.
 // Если статус код не равен 201 возращает ошибку.
-func (h *HubClient) RegisterAgent(ctx context.Context, createAgent models.CreateAgent) (*models.Agent, error) {
+func (h *HubClient) RegisterAgent(ctx context.Context, createAgent models.RegisterAgentRequest) (*models.RegisterAgentResponse, error) {
 	jsonData, err := json.Marshal(createAgent)
 	if err != nil {
 		return nil, fmt.Errorf("marshal specification: %w", err)
@@ -117,7 +117,7 @@ func (h *HubClient) RegisterAgent(ctx context.Context, createAgent models.Create
 	}
 	defer resp.Body.Close()
 
-	var agent models.Agent
+	var agent models.RegisterAgentResponse
 
 	if err = json.NewDecoder(resp.Body).Decode(&agent); err != nil {
 		return nil, fmt.Errorf("unmarshal agent: %w", err)

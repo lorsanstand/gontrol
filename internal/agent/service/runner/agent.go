@@ -32,7 +32,7 @@ func (a *AgentRunner) Serve(ctx context.Context) error {
 		return fmt.Errorf("register or update runner: %w", err)
 	}
 
-	hb := models.HeartbeatRequest{AgentID: agent.ID, OS: agent.OS, Hostname: agent.Hostname}
+	hb := models.HeartbeatRequest{AgentID: agent.ID}
 
 	for {
 		select {
