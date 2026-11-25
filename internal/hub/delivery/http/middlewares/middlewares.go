@@ -11,5 +11,5 @@ func ConnectMiddlewares(r *chi.Mux, logger *slog.Logger) {
 	initLogger(logger)
 
 	r.Use(Logger)
-	r.Use(Recovery)
+	r.Use(Recovery(logger))
 }
