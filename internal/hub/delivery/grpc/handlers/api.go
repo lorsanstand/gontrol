@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -12,9 +11,9 @@ import (
 	"github.com/lorsanstand/gontrol/internal/hub"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
 	"github.com/lorsanstand/gontrol/internal/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
-
-// TODO: переработать работу с возращаемыми ошибками
 
 type ServerAPI struct {
 	log       *slog.Logger
@@ -37,18 +36,18 @@ func (s *ServerAPI) RegisterAgent(ctx context.Context, req *protov1.RegisterAgen
 	regAgent, err := toRegisterAgentRequestDTO(req)
 	if err != nil {
 		s.log.Debug("failed convert to dto", slog.Any("error", err))
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if err = s.validator.StructCtx(ctx, regAgent); err != nil {
 		s.log.Debug("error validate", slog.Any("error", err))
-		return nil, fmt.Errorf("validate: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "validate: %w", err)
 	}
 
 	agent, err := s.agent.Register(ctx, *regAgent)
 	if err != nil {
 		s.log.Debug("error register agent", slog.Any("error", err))
-		return nil, fmt.Errorf("register agent: %w", err)
+		return nil, returnCode(err)
 	}
 
 	return &protov1.RegisterAgentResponse{Id: agent.ID.String(), HeartbeatTtl: int64(hub.TimeSendHeartbeat * time.Second)}, nil
@@ -56,13 +55,13 @@ func (s *ServerAPI) RegisterAgent(ctx context.Context, req *protov1.RegisterAgen
 
 func (s *ServerAPI) SendHeartbeat(ctx context.Context, req *protov1.HeartbeatRequest) (*protov1.HeartbeatResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("request is nil pointer")
+		return nil, status.Error(codes.InvalidArgument, "request not found")
 	}
 
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		slog.Debug("invalid agent id", slog.Any("error", err))
-		return nil, fmt.Errorf("invalid agent id")
+		return nil, status.Error(codes.InvalidArgument, "invalid agent id")
 	}
 
 	hb := models.HeartbeatRequest{AgentID: id}
@@ -70,7 +69,7 @@ func (s *ServerAPI) SendHeartbeat(ctx context.Context, req *protov1.HeartbeatReq
 	heartbeatResp, err := s.hb.Handle(ctx, hb)
 	if err != nil {
 		slog.Debug("error save hb")
-		return nil, fmt.Errorf("save heartbeat: %w", err)
+		return nil, returnCode(err)
 	}
 
 	return toProtoHearbeatResponse(*heartbeatResp), nil
@@ -78,26 +77,26 @@ func (s *ServerAPI) SendHeartbeat(ctx context.Context, req *protov1.HeartbeatReq
 
 func (s *ServerAPI) SendTaskResult(ctx context.Context, req *protov1.TaskResultRequest) (*protov1.TaskResultResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("request is nil pointer")
+		return nil, status.Error(codes.InvalidArgument, "request not found")
 	}
 
 	id, err := uuid.Parse(req.Id)
 	if err != nil {
 		slog.Debug("invalid task id", slog.Any("error", err))
-		return nil, fmt.Errorf("invalid task id")
+		return nil, status.Error(codes.InvalidArgument, "invalid task id")
 	}
 
 	taskResult := models.TaskResult{ID: id, TimeExecMS: int(req.TimeExecMs), Result: string(req.Result)}
 
 	if err = s.validator.StructCtx(ctx, taskResult); err != nil {
 		s.log.Debug("error validate", slog.Any("error", err))
-		return nil, fmt.Errorf("validate: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "validate: %w", err)
 	}
 
 	err = s.task.SaveResult(ctx, taskResult.ID, taskResult.Result, taskResult.TimeExecMS)
 	if err != nil {
 		s.log.Debug("error save task result", slog.Any("error", err))
-		return nil, fmt.Errorf("error save task result")
+		return nil, returnCode(err)
 	}
 
 	return &protov1.TaskResultResponse{}, nil
