@@ -1,0 +1,19 @@
+info:
+  name: return task result
+  type: grpc
+  seq: 3
+
+grpc:
+  url: 0.0.0.0:8088
+  method: /proto.v1.HubAgentService/SendTaskResult
+  methodType: unary
+  protoFilePath: ../contracts/proto/v1/gontrol.proto
+  message:
+    - title: message 1
+      message: |-
+        {
+          "id": "quibusdam",
+          "time_exec_ms": 844,
+          "result": "SEdhUmo="
+        }
+  auth: inherit

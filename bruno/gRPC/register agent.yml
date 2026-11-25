@@ -1,0 +1,21 @@
+info:
+  name: register agent
+  type: grpc
+  seq: 2
+
+grpc:
+  url: 0.0.0.0:8088
+  method: /proto.v1.HubAgentService/RegisterAgent
+  methodType: unary
+  protoFilePath: ../contracts/proto/v1/gontrol.proto
+  message:
+    - title: message 1
+      message: |-
+        {
+          "os": "cupio",
+          "hostname": "adopto",
+          "command_specs": [
+            {}
+          ]
+        }
+  auth: inherit
