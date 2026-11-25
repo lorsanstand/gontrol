@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	grpcHandler "github.com/lorsanstand/gontrol/internal/hub/delivery/grpc/handler"
 	"github.com/lorsanstand/gontrol/internal/hub"
 	"github.com/lorsanstand/gontrol/internal/hub/config"
+	"github.com/lorsanstand/gontrol/internal/hub/delivery/grpc"
 	http2 "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/handler"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/middlewares"
@@ -37,9 +39,11 @@ type DI struct {
 	agentHandlers     *handler.AgentHandler
 	taskHandlers      *handler.TaskHandler
 	heartbeatHandlers *handler.HeartbeatHandler
+	grpcHandlers *grpcHandler.ServerAPI
 
 	apiRouter  *chi.Mux
 	httpServer *http.Server
+	grpcServer *grpc.HubServer
 }
 
 func (d *DI) GetCfg() *config.Config {
@@ -190,4 +194,26 @@ func (d *DI) GetHttpServer() *http.Server {
 	}
 
 	return d.httpServer
+}
+
+func (d *DI) GetGrpcHandlers() *grpcHandler.ServerAPI {
+	if d.grpcHandlers == nil {
+		d.grpcHandlers = grpcHandler.NewServerAPI(
+			d.GetLogger(),
+			d.GetTaskService(),
+			d.GetHeartbeatService(),
+			d.GetAgentService())
+	}
+
+	return d.grpcHandlers
+}
+
+func (d *DI) GetGrpcServer() *grpc.HubServer {
+	if d.grpcServer == nil {
+		cfg := d.GetCfg()
+
+		d.grpcServer = grpc.New(d.GetGrpcHandlers(), cfg.GrpcPort)
+	}
+
+	return d.grpcServer
 }

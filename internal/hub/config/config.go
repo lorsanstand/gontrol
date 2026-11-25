@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Port       int        `env:"PORT" envDefault:"5467"`
+	Port       int        `env:"HTTP_PORT" envDefault:"5467"`
+	GrpcPort   int        `env:"GRPC_PORT" envDefault:"5468"`
 	LogLevel   slog.Level `env:"LOG_LEVEL" envDefault:"WARN"`
 	LogFormat  string     `env:"LOG_FORMAT" envDefault:"auto"`
 	DBPort     int        `env:"DB_PORT,required"`

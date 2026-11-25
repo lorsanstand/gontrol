@@ -6,7 +6,7 @@ import (
 	"net"
 
 	protov1 "github.com/lorsanstand/gontrol/contracts/gen/proto/v1"
-	"github.com/lorsanstand/gontrol/internal/hub/delivery/grpc/handlers"
+	"github.com/lorsanstand/gontrol/internal/hub/delivery/grpc/handler"
 	"google.golang.org/grpc"
 )
 
@@ -15,7 +15,7 @@ type HubServer struct {
 	port       int
 }
 
-func New(api *handlers.ServerAPI, port int) *HubServer {
+func New(api *handler.ServerAPI, port int) *HubServer {
 	gRPC := grpc.NewServer()
 
 	protov1.RegisterHubAgentServiceServer(gRPC, api)
