@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/lorsanstand/gontrol/internal/hub"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"

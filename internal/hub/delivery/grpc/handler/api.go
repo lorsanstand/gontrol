@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	protov1 "github.com/lorsanstand/gontrol/contracts/gen/proto/v1"
 	"github.com/lorsanstand/gontrol/internal/hub"

@@ -1,0 +1,12 @@
+info:
+  name: heartbeat
+  type: grpc
+  seq: 1
+
+grpc:
+  url: ""
+  method: ""
+  message:
+    - title: message 1
+      message: "{}"
+  auth: inherit
