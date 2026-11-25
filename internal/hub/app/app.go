@@ -47,16 +47,31 @@ func (a *App) Run() {
 	// Закрываем базу данных в конце.
 	defer a.di.GetDB().Close()
 
-	srv := a.di.GetHttpServer()
+	srvHttp := a.di.GetHttpServer()
+	srvGrpc := a.di.GetGrpcServer()
 
-	// Запускаем сервер.
+	// Запускаем HTTP сервер.
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("server error", slog.Any("error", err))
+		logger.Info("starting http server")
+
+		if err := srvHttp.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("http server error", slog.Any("error", err))
 		}
 	}()
 
-	logger.Info("gontrol-hub is running", slog.String("address", fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
+	// Запускаем GRPC сервер.
+	go func() {
+		logger.Info("starting gRPC server")
+
+		if err := srvGrpc.Serve(); err != nil {
+			logger.Error("gRPC server error", slog.Any("error", err))
+		}
+	}()
+
+	logger.Info("gontrol-hub is running",
+		slog.String("HTTP-address", fmt.Sprintf("0.0.0.0:%d", cfg.Port)),
+		slog.String("gRPC-address", fmt.Sprintf("0.0.0.0:%d", cfg.GrpcPort)),
+	)
 
 	// Делаем паузу, пока не получим сигнал от системы.
 	<-ctx.Done()
@@ -69,8 +84,12 @@ func (a *App) Run() {
 	defer shutdownCancel()
 
 	// Запускаем graceful shutdown в http сервере.
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("error server stopped", slog.Any("error", err))
+	if err := srvHttp.Shutdown(shutdownCtx); err != nil {
+		logger.Error("error http server stopped", slog.Any("error", err))
+	}
+
+	if err := srvGrpc.GracefulShutdown(ctx); err != nil {
+		logger.Error("error gRPC server stopped", slog.Any("error", err))
 	}
 
 	logger.Info("server stop")
