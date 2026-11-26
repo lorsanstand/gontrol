@@ -8,17 +8,18 @@ import (
 
 	"github.com/lorsanstand/gontrol/internal/agent/service"
 	"github.com/lorsanstand/gontrol/internal/agent/service/executor"
+	"github.com/lorsanstand/gontrol/internal/agent/service/hub_client"
 	"github.com/lorsanstand/gontrol/internal/models"
 )
 
 type AgentRunner struct {
 	log      *slog.Logger
 	taskExec *executor.TaskExecutor
-	hub      *service.HubClient
+	hub      *hub_client.HubClient
 	system   *service.System
 }
 
-func NewAgentRunner(log *slog.Logger, tasker *executor.TaskExecutor, hub *service.HubClient, system *service.System) *AgentRunner {
+func NewAgentRunner(log *slog.Logger, tasker *executor.TaskExecutor, hub *hub_client.HubClient, system *service.System) *AgentRunner {
 	return &AgentRunner{log: log, taskExec: tasker, hub: hub, system: system}
 }
 

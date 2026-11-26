@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// TODO: Написать тесты
+
 type ServerAPI struct {
 	protov1.UnimplementedHubAgentServiceServer
 	log       *slog.Logger

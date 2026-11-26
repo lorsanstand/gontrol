@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"net/url"
-	"time"
 
 	"github.com/lorsanstand/gontrol/internal/agent/config"
 	"github.com/lorsanstand/gontrol/internal/agent/service"
 	"github.com/lorsanstand/gontrol/internal/agent/service/executor"
+	"github.com/lorsanstand/gontrol/internal/agent/service/hub_client"
 	"github.com/lorsanstand/gontrol/internal/agent/service/runner"
 	"github.com/lorsanstand/gontrol/internal/utils/logger"
 )
@@ -40,21 +38,12 @@ func (a *App) Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			MaxIdleConns:        10,
-			MaxIdleConnsPerHost: 10,
-			IdleConnTimeout:     90 * time.Second,
-		},
-	}
-
-	hubURL, err := url.Parse(*a.cfg.HubURL)
+	hub, err := hub_client.NewHubClient(a.logger, *a.cfg.HubURL, GrpcTimeout, GrpcRetries)
 	if err != nil {
-		slog.Error("invalid hub URL", slog.Any("error", err))
+		a.logger.Error("error hub client init", slog.Any("error", err))
+		return 1
 	}
 
-	hub := service.NewHubClient(*hubURL, client)
 	task := executor.New(a.logger)
 	system, err := service.SystemInit(a.cfg)
 	if err != nil {
