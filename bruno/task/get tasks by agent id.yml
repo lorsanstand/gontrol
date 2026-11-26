@@ -1,7 +1,7 @@
 info:
   name: get tasks by agent id
   type: http
-  seq: 4
+  seq: 3
 
 http:
   method: GET

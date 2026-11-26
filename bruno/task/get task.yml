@@ -8,7 +8,7 @@ http:
   url: 127.0.0.1:8089/api/v1/tasks/:id
   params:
     - name: id
-      value: ""
+      value: 01a2174a-cea6-72e6-9ede-ebc1b2e05648
       type: path
   auth: inherit
 
