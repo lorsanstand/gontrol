@@ -1,5 +1,4 @@
-hub-url: http://127.0.0.1:5467/api/v1/
+hub-url: 127.0.0.1:5467
 log-level: WARN
-# console, json, auto
-log-format: auto
+log-format: auto # console, json, auto
 agent-id: null
