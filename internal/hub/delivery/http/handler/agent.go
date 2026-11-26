@@ -4,14 +4,11 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/lorsanstand/gontrol/internal/hub"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
-	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
@@ -140,33 +137,6 @@ func (a *AgentHandler) PatchEditDesc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func (a *AgentHandler) PostRegisterAgent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	var createAgent models.RegisterAgentRequest
-
-	err := json.NewDecoder(r.Body).Decode(&createAgent)
-	if err != nil {
-		a.log.Debug("invalid json", slog.Any("error", err))
-		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
-		return
-	}
-
-	if err = a.validator.StructCtx(ctx, createAgent); err != nil {
-		utils.WriteError(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	agent, err := a.agent.Register(ctx, createAgent)
-	if err != nil {
-		ReturnErrors(w, "error create agent", err)
-		return
-	}
-
-	newAgent := models.RegisterAgentResponse{ID: agent.ID, HeartbeatTTL: hub.TimeSendHeartbeat * time.Second}
-
-	utils.WriteJSON(w, newAgent, http.StatusCreated)
 }
 
 func (a *AgentHandler) GetCommandSpecs(w http.ResponseWriter, r *http.Request) {

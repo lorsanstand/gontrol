@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	grpcHandler "github.com/lorsanstand/gontrol/internal/hub/delivery/grpc/handler"
 	"github.com/lorsanstand/gontrol/internal/hub"
 	"github.com/lorsanstand/gontrol/internal/hub/config"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/grpc"
+	grpcHandler "github.com/lorsanstand/gontrol/internal/hub/delivery/grpc/handler"
 	http2 "github.com/lorsanstand/gontrol/internal/hub/delivery/http"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/handler"
 	"github.com/lorsanstand/gontrol/internal/hub/delivery/http/middlewares"
@@ -36,10 +36,9 @@ type DI struct {
 	taskService      *service.TaskService
 	heartbeatService *service.HeartbeatService
 
-	agentHandlers     *handler.AgentHandler
-	taskHandlers      *handler.TaskHandler
-	heartbeatHandlers *handler.HeartbeatHandler
-	grpcHandlers *grpcHandler.ServerAPI
+	agentHandlers *handler.AgentHandler
+	taskHandlers  *handler.TaskHandler
+	grpcHandlers  *grpcHandler.ServerAPI
 
 	apiRouter  *chi.Mux
 	httpServer *http.Server
@@ -159,19 +158,11 @@ func (d *DI) GetTaskHandlers() *handler.TaskHandler {
 	return d.taskHandlers
 }
 
-func (d *DI) GetHeartbeatHandlers() *handler.HeartbeatHandler {
-	if d.heartbeatHandlers == nil {
-		d.heartbeatHandlers = handler.NewHeartbeatHandler(d.GetLogger(), d.GetHeartbeatService())
-	}
-
-	return d.heartbeatHandlers
-}
-
 func (d *DI) GetApiRouter() *chi.Mux {
 	if d.apiRouter == nil {
 		r := chi.NewRouter()
 		middlewares.ConnectMiddlewares(r, d.GetLogger())
-		apiRouter := http2.RegisterRoutes(d.GetTaskHandlers(), d.GetAgentHandlers(), d.GetHeartbeatHandlers())
+		apiRouter := http2.RegisterRoutes(d.GetTaskHandlers(), d.GetAgentHandlers())
 		r.Mount("/api/v1", apiRouter)
 		d.apiRouter = r
 	}

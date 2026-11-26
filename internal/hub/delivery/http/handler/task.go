@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	modelsHub "github.com/lorsanstand/gontrol/internal/hub/models"
 	"github.com/lorsanstand/gontrol/internal/hub/service"
-	"github.com/lorsanstand/gontrol/internal/models"
 	"github.com/lorsanstand/gontrol/internal/utils"
 )
 
@@ -47,32 +46,6 @@ func (t *TaskHandler) PostCreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, task, http.StatusCreated)
-}
-
-func (t *TaskHandler) PostResultTask(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	var taskResult models.TaskResult
-
-	defer r.Body.Close()
-	err := json.NewDecoder(r.Body).Decode(&taskResult)
-	if err != nil {
-		t.log.Debug("invalid json", slog.Any("error", err))
-		utils.WriteError(w, "Invalid json", http.StatusBadRequest)
-		return
-	}
-
-	if err = t.validator.StructCtx(ctx, taskResult); err != nil {
-		utils.WriteError(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = t.task.SaveResult(ctx, taskResult.ID, taskResult.Result, taskResult.TimeExecMS)
-	if err != nil {
-		ReturnErrors(w, "error save task result", err)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
 }
 
 func (t *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {

@@ -8,15 +8,11 @@ import (
 func RegisterRoutes(
 	taskHandler *handler.TaskHandler,
 	agentHandler *handler.AgentHandler,
-	heartbeatHandler *handler.HeartbeatHandler,
 ) *chi.Mux {
 	mux := chi.NewRouter()
 
-	mux.Post("/heartbeat", heartbeatHandler.ServeHTTP)
-
 	taskRouter := chi.NewRouter()
 	taskRouter.Post("/", taskHandler.PostCreateTask)
-	taskRouter.Post("/result", taskHandler.PostResultTask)
 	taskRouter.Get("/{id}", taskHandler.GetTask)
 	taskRouter.Get("/agent/{id}", taskHandler.GetTaskByAgentID)
 
@@ -26,7 +22,6 @@ func RegisterRoutes(
 	agentRouter.Get("/{id}/commands", agentHandler.GetCommandSpecs)
 	agentRouter.Patch("/{id}/name", agentHandler.PatchEditName)
 	agentRouter.Patch("/{id}/description", agentHandler.PatchEditDesc)
-	agentRouter.Post("/register", agentHandler.PostRegisterAgent)
 
 	mux.Mount("/tasks", taskRouter)
 	mux.Mount("/agents", agentRouter)
